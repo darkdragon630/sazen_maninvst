@@ -1,5 +1,15 @@
 <?php
+session_start(); // mulai session
 require_once "../config.php"; // koneksi ke database
+
+// cek apakah user sudah login
+if (!isset($_SESSION['user_id'])) {
+    header("Location: auth.php");
+    exit;
+}
+
+// inisialisasi variabel
+date_default_timezone_set('Asia/Jakarta');
 
 $message = "";
 
@@ -14,7 +24,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $kategori = $_POST['kategori_id'];
 
     // upload file
-    $targetDir =__DIR__"/../bukti_investasi/";
+    $targetDir =__DIR__ . "/../bukti_investasi/";
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0775, true);
     }

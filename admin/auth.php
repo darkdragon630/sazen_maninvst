@@ -12,6 +12,12 @@ if (isset($_SESSION['user_id'])) {
 $error = "";
 $success = "";
 
+// Tampilkan pesan sukses dari register
+if (isset($_SESSION['reg_success'])) {
+    $success = $_SESSION['reg_success'];
+    unset($_SESSION['reg_success']); // hapus biar tidak muncul lagi setelah refresh
+}
+
 /* =========================
    PROSES LOGIN
 ========================= */
@@ -29,7 +35,7 @@ if (isset($_POST['login'])) {
         
         if ($user && password_verify($password, $user['password'])) {
             // simpan session login
-            $_SESSION['user_id'] = $user['id'];  // Perbaiki: gunakan user_id bukan user
+            $_SESSION['user_id'] = $user['id'];
             $_SESSION['username'] = $user['username'];
             $_SESSION['email'] = $user['email'];
 
@@ -82,7 +88,10 @@ if (isset($_POST['register'])) {
             $stmt = $koneksi->prepare($sql);
             
             if ($stmt->execute([$username, $email, $hashed_password])) {
-                $success = "✅ Akun berhasil dibuat! Silakan login.";
+                // simpan pesan sukses lalu redirect ke login
+                $_SESSION['reg_success'] = "✅ Akun berhasil dibuat! Silakan login.";
+                header("Location: auth.php");
+                exit;
             } else {
                 $error = "❌ Gagal membuat akun. Coba lagi.";
             }

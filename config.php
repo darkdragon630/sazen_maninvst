@@ -1,6 +1,6 @@
 <?php
 $host = 'db.fr-pari1.bengt.wasmernet.com';
-$db = 'dbNANgVXJBJEnGrupi8tAkXpz';
+$db = 'dbNANgVXJBJEnGrupi8tAkXp';
 $user = '4569b4f873728000025f9d30c379';
 $pass = '068b4569-b4f8-763b-8000-2f1c3f10046c';
 $port = '10272';

@@ -1,5 +1,12 @@
 <?php
+session_start();
 require_once '../config.php'; // koneksi ke database
+
+// cek login
+if (!isset($_SESSION['user_id'])) {
+    header("Location: auth.php");
+    exit;
+}
 
 $message = "";
 
@@ -26,24 +33,20 @@ try {
 
 // proses form submit
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $judul = $_POST['judul_investasi'] ?? '';
+    $judul     = $_POST['judul_investasi'] ?? '';
     $deskripsi = $_POST['deskripsi'] ?? '';
     $jumlah_input = $_POST['jumlah'] ?? '';
-    $tanggal = $_POST['tanggal_investasi'] ?? '';
-    $kategori = $_POST['kategori_id'] ?? '';
+    $tanggal  = $_POST['tanggal_investasi'] ?? '';
+    $kategori = (int)($_POST['kategori_id'] ?? 0);
 
-    // Jika input jumlah menggunakan format Indonesia (ribuan titik, desimal koma)
-    // Uncomment jika format seperti ini:
-    // $jumlah_bersih = str_replace('.', '', $jumlah_input);
-    // $jumlah_bersih = str_replace(',', '.', $jumlah_bersih);
-    // $jumlah = floatval($jumlah_bersih);
-
-    // Jika input jumlah sudah dalam format angka desimal (misal 100000.00)
-    $jumlah = floatval($jumlah_input);
+    // konversi jumlah (support format Indonesia)
+    $jumlah_bersih = str_replace('.', '', $jumlah_input);
+    $jumlah_bersih = str_replace(',', '.', $jumlah_bersih);
+    $jumlah = floatval($jumlah_bersih);
 
     // validasi sederhana
     if (empty($judul) || empty($jumlah_input) || empty($tanggal) || empty($kategori)) {
-        $message = "Semua field kecuali deskripsi wajib diisi.";
+        $message = "❌ Semua field kecuali deskripsi wajib diisi.";
     } else {
         try {
             $sql = "UPDATE investasi SET 
@@ -60,26 +63,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->bindParam(':deskripsi', $deskripsi);
             $stmt->bindParam(':jumlah', $jumlah);
             $stmt->bindParam(':tanggal', $tanggal);
-            $stmt->bindParam(':kategori', $kategori);
+            $stmt->bindParam(':kategori', $kategori, PDO::PARAM_INT);
             $stmt->bindParam(':id', $id, PDO::PARAM_INT);
 
             if ($stmt->execute()) {
                 header('Location: ../dashboard.php?msg=edit_sukses');
                 exit;
             } else {
-                $message = "Gagal mengupdate data.";
+                $message = "❌ Gagal mengupdate data.";
             }
         } catch (PDOException $e) {
-            $message = "Error saat update: " . $e->getMessage();
+            $message = "❌ Error saat update: " . $e->getMessage();
         }
     }
 } else {
-    // jika bukan POST, isi form dengan data lama dari database
-    $judul = $investasi['judul_investasi'];
+    // isi form dengan data lama dari database
+    $judul     = $investasi['judul_investasi'];
     $deskripsi = $investasi['deskripsi'];
-    $jumlah = $investasi['jumlah'];
-    $tanggal = $investasi['tanggal_investasi'];
-    $kategori = $investasi['kategori_id'];
+    $jumlah    = $investasi['jumlah'];
+    $tanggal   = $investasi['tanggal_investasi'];
+    $kategori  = $investasi['kategori_id'];
 }
 ?>
 
