@@ -4,16 +4,16 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET');
 header('Access-Control-Allow-Headers: Content-Type');
 
-// Enable error reporting for debugging
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+// Turn off error output to prevent JSON corruption
+ini_set('display_errors', 0);
+error_reporting(0);
 
 require_once 'config.php';
 
 try {
-    // Check database connection
-    if (!isset($koneksi) || !$koneksi) {
-        throw new Exception('Database connection failed');
+    // Check if database connection exists
+    if (!isset($koneksi)) {
+        throw new Exception('Database connection variable not found');
     }
 
     $sql = "
@@ -24,33 +24,36 @@ try {
     ";
 
     $stmt = $koneksi->prepare($sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare SQL statement');
+    }
+
     $stmt->execute();
     $investasi = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Convert jumlah to number for easier processing in JavaScript
+    // Ensure we have data
+    if ($investasi === false) {
+        throw new Exception('Failed to fetch data from database');
+    }
+
+    // Convert and clean data for JavaScript
     foreach ($investasi as &$item) {
-        $item['jumlah'] = (float) $item['jumlah'];
         $item['id'] = (int) $item['id'];
-        
-        // Ensure all fields are properly set
+        $item['jumlah'] = (float) $item['jumlah'];
         $item['judul_investasi'] = $item['judul_investasi'] ?? '';
         $item['deskripsi'] = $item['deskripsi'] ?? '';
         $item['nama_kategori'] = $item['nama_kategori'] ?? '';
         $item['tanggal_investasi'] = $item['tanggal_investasi'] ?? date('Y-m-d');
     }
 
-    // Log for debugging
-    error_log('Fetched ' . count($investasi) . ' investment records');
-
-    echo json_encode($investasi, JSON_PRETTY_PRINT);
+    // Return clean JSON
+    echo json_encode($investasi);
 
 } catch (PDOException $e) {
-    error_log('Database error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Database error occurred']);
 } catch (Exception $e) {
-    error_log('General error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => 'Server error: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Server error occurred']);
 }
 ?>
