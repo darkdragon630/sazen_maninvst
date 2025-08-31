@@ -340,25 +340,6 @@ foreach ($investasi as $item) {
     </button>
 
     <script>
-        function loadInvestasi(){
-            fetch("fetch_investasi.php")
-                .then(res => res.json())
-                .then(data => {
-                    const container = document.getElementById("investmentsGrid");
-                    container.innerHTML = "";
-                    data.forEach((item, index) => {
-                    container.innerHTML += `
-                        <div class="investment-card" style="--animation-delay:${index*0.1}s">
-                            <h2>${item.judul_investasi}</h2>
-                            <p>Rp ${parseInt(item.jumlah).toLocaleString("id-ID")}</p>
-                            <small>${item.tanggal_investasi}</small>
-                        </div>
-                    `;
-                });
-            });
-        }
-        loadInvestasi();
-        setInterval(loadInvestasi, 5000)
         // Loading Animation
         window.addEventListener('load', function() {
             const loadingOverlay = document.getElementById('loadingOverlay');
