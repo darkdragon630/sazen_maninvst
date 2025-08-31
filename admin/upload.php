@@ -14,7 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $kategori = $_POST['kategori_id'];
 
     // upload file
-    $targetDir =__DIR__"/../bukti_investasi/";
+    $targetDir =__DIR__"../bukti_investasi/";
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0775, true);
     }
