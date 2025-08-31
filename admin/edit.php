@@ -10,14 +10,14 @@ if (!isset($_SESSION['user_id'])) {
 
 $message = "";
 
-// cek apakah parameter id ada dan valid
+// cek parameter id
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
     die('ID investasi tidak valid.');
 }
 
 $id = (int)$_GET['id'];
 
-// ambil data investasi berdasarkan ID
+// ambil data investasi
 try {
     $stmt = $koneksi->prepare("SELECT * FROM investasi WHERE id = :id");
     $stmt->bindParam(':id', $id, PDO::PARAM_INT);
@@ -31,31 +31,46 @@ try {
     die("Gagal mengambil data: " . $e->getMessage());
 }
 
-// proses form submit
+// proses form
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $judul     = $_POST['judul_investasi'] ?? '';
-    $deskripsi = $_POST['deskripsi'] ?? '';
+    $judul        = $_POST['judul_investasi'] ?? '';
+    $deskripsi    = $_POST['deskripsi'] ?? '';
     $jumlah_input = $_POST['jumlah'] ?? '';
-    $tanggal  = $_POST['tanggal_investasi'] ?? '';
-    $kategori = (int)($_POST['kategori_id'] ?? 0);
+    $tanggal      = $_POST['tanggal_investasi'] ?? '';
+    $kategori     = (int)($_POST['kategori_id'] ?? 0);
 
-    // konversi jumlah (support format Indonesia)
-    $jumlah_bersih = str_replace('.', '', $jumlah_input);
-    $jumlah_bersih = str_replace(',', '.', $jumlah_bersih);
-    $jumlah = floatval($jumlah_bersih);
+    /* ========================
+       FIX PARSING JUMLAH
+    ======================== */
+    if ($jumlah_input === '' || $jumlah_input === null) {
+        $jumlah = 0;
+    } else {
+        $jumlah_input = trim($jumlah_input);
 
-    // validasi sederhana
+        // Jika input hanya angka (tanpa titik/koma)
+        if (preg_match('/^\d+$/', $jumlah_input)) {
+            $jumlah = (float)$jumlah_input;
+        } else {
+            // hapus titik ribuan
+            $jumlah_bersih = str_replace('.', '', $jumlah_input);
+            // ubah koma ke titik untuk desimal
+            $jumlah_bersih = str_replace(',', '.', $jumlah_bersih);
+            $jumlah = (float)$jumlah_bersih;
+        }
+    }
+
+    // validasi
     if (empty($judul) || empty($jumlah_input) || empty($tanggal) || empty($kategori)) {
-        $message = "❌ Semua field kecuali deskripsi wajib diisi.";
+        $message = "❌ Semua field (kecuali deskripsi) wajib diisi.";
     } else {
         try {
             $sql = "UPDATE investasi SET 
-                        judul_investasi = :judul,
-                        deskripsi = :deskripsi,
-                        jumlah = :jumlah,
+                        judul_investasi   = :judul,
+                        deskripsi         = :deskripsi,
+                        jumlah            = :jumlah,
                         tanggal_investasi = :tanggal,
-                        kategori_id = :kategori,
-                        updated_at = NOW()
+                        kategori_id       = :kategori,
+                        updated_at        = NOW()
                     WHERE id = :id";
 
             $stmt = $koneksi->prepare($sql);
@@ -77,7 +92,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 } else {
-    // isi form dengan data lama dari database
+    // isi form dari database (RAW tanpa format number_format)
     $judul     = $investasi['judul_investasi'];
     $deskripsi = $investasi['deskripsi'];
     $jumlah    = $investasi['jumlah'];
@@ -90,9 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Investasi</title>
-    <!-- Pastikan path CSS benar -->
     <link rel="stylesheet" href="../assets/css/edit.css">
 </head>
 <body>
@@ -112,6 +126,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <label>Jumlah:</label>
             <input type="text" name="jumlah" value="<?php echo htmlspecialchars($jumlah); ?>" required>
+            <small>* Masukkan angka tanpa titik/koma, misal: 148500</small>
 
             <label>Tanggal Investasi:</label>
             <input type="date" name="tanggal_investasi" value="<?php echo htmlspecialchars($tanggal); ?>" required>

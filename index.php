@@ -270,6 +270,10 @@ foreach ($investasi as $item) {
                 </div>
                 <h3 class="empty-title">Belum Ada Data Investasi</h3>
                 <p class="empty-description">Data investasi akan muncul di sini setelah ditambahkan melalui dashboard admin</p>
+                <button class="empty-action-btn">
+                    <i class="fas fa-plus"></i>
+                    Tambah Investasi
+                </button>
             </div>
         <?php endif; ?>
         

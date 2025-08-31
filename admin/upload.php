@@ -1,5 +1,5 @@
 <?php
-session_start(); // mulai session
+session_start(); 
 require_once "../config.php"; // koneksi ke database
 
 // cek apakah user sudah login
@@ -8,30 +8,48 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// inisialisasi variabel
 date_default_timezone_set('Asia/Jakarta');
 
 $message = "";
 
 // Proses simpan data
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $judul     = $_POST['judul_investasi'];
-    $deskripsi = $_POST['deskripsi'];
+    $judul     = $_POST['judul_investasi'] ?? '';
+    $deskripsi = $_POST['deskripsi'] ?? '';
+    $jumlah_input = $_POST['jumlah'] ?? '';
+    $tanggal  = $_POST['tanggal_investasi'] ?? '';
+    $kategori = $_POST['kategori_id'] ?? '';
 
-    // Bersihkan jumlah agar bisa input pakai titik/koma
-    $jumlah = str_replace(['.', ','], '', $_POST['jumlah']); 
-    $tanggal  = $_POST['tanggal_investasi'];
-    $kategori = $_POST['kategori_id'];
+    /* ========================
+       FIX PARSING JUMLAH
+    ======================== */
+    if ($jumlah_input === '' || $jumlah_input === null) {
+        $jumlah = 0;
+    } else {
+        $jumlah_input = trim($jumlah_input);
+
+        // Jika input hanya angka (tanpa titik/koma)
+        if (preg_match('/^\d+$/', $jumlah_input)) {
+            $jumlah = (float)$jumlah_input;
+        } else {
+            // hapus titik ribuan
+            $jumlah_bersih = str_replace('.', '', $jumlah_input);
+            // ubah koma jadi titik untuk desimal
+            $jumlah_bersih = str_replace(',', '.', $jumlah_bersih);
+            $jumlah = (float)$jumlah_bersih;
+        }
+    }
 
     // upload file
-    $targetDir =__DIR__ . "/../bukti_investasi/";
+    $targetDir = __DIR__ . "/../bukti_investasi/";
     if (!is_dir($targetDir)) {
         mkdir($targetDir, 0775, true);
     }
 
-    $fileName       = basename($_FILES["bukti"]["name"]);
-    $targetFilePath = $targetDir . time() . "_" . $fileName;
-    $fileType       = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
+    $fileName = basename($_FILES["bukti"]["name"]);
+    $newFileName = time() . "_" . preg_replace("/[^a-zA-Z0-9\._-]/", "", $fileName); // sanitize nama file
+    $targetFilePath = $targetDir . $newFileName;
+    $fileType = strtolower(pathinfo($targetFilePath, PATHINFO_EXTENSION));
 
     $allowedTypes = ["jpg", "jpeg", "png", "pdf"];
     if (in_array($fileType, $allowedTypes)) {
@@ -39,17 +57,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             try {
                 // Simpan ke DB
                 $sql = "INSERT INTO investasi
-                        (judul_investasi, deskripsi, jumlah, tanggal_investasi, kategori_id, created_at, updated_at) 
-                        VALUES (:judul, :deskripsi, :jumlah, :tanggal, :kategori, NOW(), NOW())";
+                        (judul_investasi, deskripsi, jumlah, tanggal_investasi, kategori_id, bukti_file, created_at, updated_at) 
+                        VALUES (:judul, :deskripsi, :jumlah, :tanggal, :kategori, :bukti, NOW(), NOW())";
                 $stmt = $koneksi->prepare($sql);
                 $stmt->execute([
                     ':judul'    => $judul,
                     ':deskripsi'=> $deskripsi,
                     ':jumlah'   => $jumlah,
                     ':tanggal'  => $tanggal,
-                    ':kategori' => $kategori
+                    ':kategori' => $kategori,
+                    ':bukti'    => $newFileName
                 ]);
-                // ✅ redirect ke dashboard dengan query string success
+                // redirect ke dashboard
                 header("Location: ../dashboard.php?success=1");
                 exit;
             } catch (PDOException $e) {
@@ -76,8 +95,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <h2>Tambah Data Investasi</h2>
 
         <?php if (!empty($message)): ?>
-            <p class="<?php echo strpos($message, 'berhasil') !== false ? 'success' : 'error'; ?>">
-                <?php echo $message; ?>
+            <p class="<?php echo strpos($message, '❌') === false ? 'success' : 'error'; ?>">
+                <?php echo htmlspecialchars($message); ?>
             </p>
         <?php endif; ?>
 
@@ -86,10 +105,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             <input type="text" name="judul_investasi" required>
 
             <label>Deskripsi:</label>
-            <textarea name="deskripsi" required></textarea>
+            <textarea name="deskripsi"></textarea>
 
             <label>Jumlah (Rp):</label>
-            <input type="text" name="jumlah" placeholder="contoh: 143.500" required>
+            <input type="text" name="jumlah" placeholder="contoh: 148500 atau 148.500" required>
 
             <label>Tanggal Investasi:</label>
             <input type="date" name="tanggal_investasi" required>
@@ -101,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 try {
                     $stmt = $koneksi->query("SELECT id, nama_kategori FROM kategori");
                     while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-                        echo "<option value='{$row['id']}'>{$row['nama_kategori']}</option>";
+                        echo "<option value='{$row['id']}'>".htmlspecialchars($row['nama_kategori'])."</option>";
                     }
                 } catch (PDOException $e) {
                     echo "<option disabled>Gagal load kategori</option>";
