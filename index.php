@@ -270,14 +270,42 @@ foreach ($investasi as $item) {
         // Fungsi untuk fetch data investasi
         async function fetchInvestasi() {
             try {
+                console.log('Fetching data from fetch_investasi.php...'); // Debug log
+                
                 const response = await fetch('fetch_investasi.php');
+                
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    console.error('Response is not JSON:', text);
+                    throw new Error("Response is not JSON");
+                }
+                
                 const data = await response.json();
+                console.log('Data received:', data); // Debug log
+                
+                // Check if data is array
+                if (!Array.isArray(data)) {
+                    console.error('Data is not an array:', data);
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    throw new Error('Invalid data format');
+                }
                 
                 investasiData = data;
                 filteredData = [...data];
                 
                 // Hitung total investasi
-                totalInvestasi = data.reduce((sum, item) => sum + parseFloat(item.jumlah), 0);
+                totalInvestasi = data.reduce((sum, item) => sum + parseFloat(item.jumlah || 0), 0);
+                
+                console.log('Total investasi:', totalInvestasi); // Debug log
+                console.log('Jumlah data:', data.length); // Debug log
                 
                 // Update stats
                 updateStats();
@@ -483,15 +511,32 @@ foreach ($investasi as $item) {
         // Fungsi untuk search
         function searchInvestments(keyword) {
             keyword = keyword.toLowerCase();
-            if (keyword === '') {
-                filteredData = [...investasiData];
-            } else {
-                filteredData = investasiData.filter(item => 
-                    item.judul_investasi.toLowerCase().includes(keyword) ||
-                    item.nama_kategori.toLowerCase().includes(keyword) ||
-                    item.deskripsi.toLowerCase().includes(keyword)
-                );
+            
+            // Get current category filter
+            const currentCategory = document.getElementById('categoryFilter').value;
+            
+            // Start with original data or filtered by category
+            let dataToFilter = investasiData;
+            if (currentCategory !== 'all') {
+                dataToFilter = investasiData.filter(item => item.nama_kategori === currentCategory);
             }
+            
+            // Apply search filter
+            if (keyword === '') {
+                filteredData = dataToFilter;
+            } else {
+                filteredData = dataToFilter.filter(item => {
+                    const judul = (item.judul_investasi || '').toLowerCase();
+                    const kategori = (item.nama_kategori || '').toLowerCase();
+                    const deskripsi = (item.deskripsi || '').toLowerCase();
+                    
+                    return judul.includes(keyword) || 
+                           kategori.includes(keyword) || 
+                           deskripsi.includes(keyword);
+                });
+            }
+            
+            console.log('Search results:', filteredData.length, 'items'); // Debug log
             renderInvestments();
         }
 
@@ -568,7 +613,32 @@ foreach ($investasi as $item) {
         }, 30000);
 
         // Initialize - Load data saat halaman dimuat
-        fetchInvestasi();
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting initialization...');
+            
+            // Test if fetch_investasi.php is accessible
+            fetch('fetch_investasi.php')
+                .then(response => {
+                    console.log('Initial response status:', response.status);
+                    console.log('Initial response headers:', response.headers.get('content-type'));
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('Raw response:', text);
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('Parsed JSON:', data);
+                    } catch(e) {
+                        console.error('JSON parse error:', e);
+                        console.error('Response was:', text);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch test error:', error);
+                });
+            
+            fetchInvestasi();
+        });
     </script>
 </body>
 </html>
