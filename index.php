@@ -72,8 +72,8 @@ foreach ($investasi as $item) {
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Investasi</div>
-                        <div class="stat-value" data-value="<?= $total_investasi ?>">
-                            Rp <?= number_format($total_investasi, 0, ',', '.'); ?>
+                        <div class="stat-value" id="totalInvestasi">
+                            Rp 0
                         </div>
                     </div>
                 </div>
@@ -84,7 +84,7 @@ foreach ($investasi as $item) {
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Jumlah Investasi</div>
-                        <div class="stat-value"><?= count($investasi); ?> Item</div>
+                        <div class="stat-value" id="jumlahInvestasi">0 Item</div>
                     </div>
                 </div>
                 
@@ -145,11 +145,6 @@ foreach ($investasi as $item) {
                     <label for="categoryFilter">Kategori:</label>
                     <select id="categoryFilter" class="filter-select">
                         <option value="all">Semua Kategori</option>
-                        <?php 
-                        $categories = array_unique(array_column($investasi, 'nama_kategori'));
-                        foreach($categories as $category): ?>
-                            <option value="<?= htmlspecialchars($category) ?>"><?= htmlspecialchars($category) ?></option>
-                        <?php endforeach; ?>
                     </select>
                 </div>
                 
@@ -160,122 +155,26 @@ foreach ($investasi as $item) {
             </div>
         </section>
 
-        <?php if ($investasi): ?>
-            <section class="investments-grid" id="investmentsGrid">
-                <?php foreach ($investasi as $index => $item): ?>
-                    <div class="investment-card" 
-                         data-category="<?= htmlspecialchars($item['nama_kategori']) ?>"
-                         data-amount="<?= $item['jumlah'] ?>"
-                         data-date="<?= $item['tanggal_investasi'] ?>"
-                         data-title="<?= htmlspecialchars($item['judul_investasi']) ?>"
-                         style="--animation-delay: <?= $index * 0.1 ?>s">
-                        
-                        <div class="card-glow"></div>
-                        
-                        <div class="card-header">
-                            <div class="card-header-content">
-                                <h2 class="card-title">
-                                    <i class="fas fa-chart-pie card-title-icon"></i>
-                                    <?= htmlspecialchars($item['judul_investasi']); ?>
-                                </h2>
-                                <div class="category-badge">
-                                    <i class="fas fa-tag"></i>
-                                    <?= htmlspecialchars($item['nama_kategori']); ?>
-                                </div>
-                            </div>
-                            <div class="card-menu">
-                                <button class="menu-btn">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="card-body">
-                            <div class="amount-section">
-                                <div class="amount-header">
-                                    <span class="amount-label">
-                                        <i class="fas fa-coins"></i>
-                                        Nilai Investasi
-                                    </span>
-                                    <div class="amount-trend positive">
-                                        <i class="fas fa-arrow-up"></i>
-                                        <span>+2.5%</span>
-                                    </div>
-                                </div>
-                                <div class="amount-value-container">
-                                    <span class="amount-value" data-amount="<?= $item['jumlah'] ?>">
-                                        Rp <?= number_format($item['jumlah'], 0, ',', '.'); ?>
-                                    </span>
-                                    <div class="amount-progress">
-                                        <div class="progress-bar" style="width: <?= min(($item['jumlah'] / $total_investasi) * 100, 100) ?>%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="date-section">
-                                <div class="date-info">
-                                    <i class="fas fa-calendar-alt date-icon"></i>
-                                    <div class="date-content">
-                                        <span class="date-label">Tanggal Investasi</span>
-                                        <span class="date-value"><?= date("d M Y", strtotime($item['tanggal_investasi'])); ?></span>
-                                    </div>
-                                </div>
-                                <div class="time-badge">
-                                    <?php 
-                                    $days = (time() - strtotime($item['tanggal_investasi'])) / (60 * 60 * 24);
-                                    echo $days < 30 ? 'Baru' : ($days < 365 ? 'Aktif' : 'Matang');
-                                    ?>
-                                </div>
-                            </div>
-                            
-                            <?php if (!empty($item['deskripsi'])): ?>
-                                <div class="description-section">
-                                    <div class="description-header">
-                                        <i class="fas fa-info-circle"></i>
-                                        <span>Deskripsi</span>
-                                    </div>
-                                    <p class="description-text"><?= nl2br(htmlspecialchars($item['deskripsi'])); ?></p>
-                                </div>
-                            <?php endif; ?>
-                            
-                            <div class="card-actions">
-                                <button class="action-btn primary">
-                                    <i class="fas fa-eye"></i>
-                                    Detail
-                                </button>
-                                <button class="action-btn secondary">
-                                    <i class="fas fa-share-alt"></i>
-                                    Bagikan
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="card-footer">
-                            <div class="performance-indicator">
-                                <div class="indicator-dot positive"></div>
-                                <span class="performance-text">Performa Baik</span>
-                            </div>
-                            <div class="investment-id">#INV-<?= str_pad($item['id'], 4, '0', STR_PAD_LEFT) ?></div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </section>
-        <?php else: ?>
-            <div class="empty-state">
-                <div class="empty-animation">
-                    <div class="empty-icon">
-                        <i class="fas fa-chart-line-up"></i>
-                        <div class="icon-pulse-empty"></div>
-                    </div>
+        <!-- Investments Grid -->
+        <section class="investments-grid" id="investmentsGrid">
+            <!-- Cards will be rendered here by JavaScript -->
+        </section>
+        
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <div class="empty-animation">
+                <div class="empty-icon">
+                    <i class="fas fa-chart-line-up"></i>
+                    <div class="icon-pulse-empty"></div>
                 </div>
-                <h3 class="empty-title">Belum Ada Data Investasi</h3>
-                <p class="empty-description">Data investasi akan muncul di sini setelah ditambahkan melalui dashboard admin</p>
-                <button class="empty-action-btn">
-                    <i class="fas fa-plus"></i>
-                    Tambah Investasi
-                </button>
             </div>
-        <?php endif; ?>
+            <h3 class="empty-title">Belum Ada Data Investasi</h3>
+            <p class="empty-description">Data investasi akan muncul di sini setelah ditambahkan melalui dashboard admin</p>
+            <button class="empty-action-btn">
+                <i class="fas fa-plus"></i>
+                Tambah Investasi
+            </button>
+        </div>
         
         <!-- Quick Stats Summary -->
         <section class="quick-stats">
@@ -299,7 +198,7 @@ foreach ($investasi as $item) {
                 <div class="quick-stat-item">
                     <i class="fas fa-clock stat-icon"></i>
                     <div class="stat-info">
-                        <div class="stat-number"><?= count($investasi) ?></div>
+                        <div class="stat-number" id="activePositions">0</div>
                         <div class="stat-desc">Active Positions</div>
                     </div>
                 </div>
@@ -340,6 +239,287 @@ foreach ($investasi as $item) {
     </button>
 
     <script>
+        let investasiData = [];
+        let filteredData = [];
+        let totalInvestasi = 0;
+
+        // Fungsi untuk format angka ke format rupiah
+        function formatRupiah(angka) {
+            return new Intl.NumberFormat('id-ID').format(angka);
+        }
+
+        // Fungsi untuk format tanggal
+        function formatTanggal(tanggal) {
+            const bulan = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 
+                          'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+            const d = new Date(tanggal);
+            return d.getDate() + ' ' + bulan[d.getMonth()] + ' ' + d.getFullYear();
+        }
+
+        // Fungsi untuk mendapatkan status waktu investasi
+        function getInvestmentStatus(tanggal) {
+            const now = new Date();
+            const investDate = new Date(tanggal);
+            const days = Math.floor((now - investDate) / (1000 * 60 * 60 * 24));
+            
+            if (days < 30) return 'Baru';
+            if (days < 365) return 'Aktif';
+            return 'Matang';
+        }
+
+        // Fungsi untuk fetch data investasi
+        async function fetchInvestasi() {
+            try {
+                const response = await fetch('fetch_investasi.php');
+                const data = await response.json();
+                
+                investasiData = data;
+                filteredData = [...data];
+                
+                // Hitung total investasi
+                totalInvestasi = data.reduce((sum, item) => sum + parseFloat(item.jumlah), 0);
+                
+                // Update stats
+                updateStats();
+                updateCategoryFilter();
+                renderInvestments();
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                showEmptyState();
+            }
+        }
+
+        // Fungsi untuk update statistik
+        function updateStats() {
+            document.getElementById('totalInvestasi').textContent = 'Rp ' + formatRupiah(totalInvestasi);
+            document.getElementById('jumlahInvestasi').textContent = investasiData.length + ' Item';
+            document.getElementById('activePositions').textContent = investasiData.length;
+        }
+
+        // Fungsi untuk update kategori filter
+        function updateCategoryFilter() {
+            const categorySelect = document.getElementById('categoryFilter');
+            const categories = [...new Set(investasiData.map(item => item.nama_kategori))];
+            
+            // Clear existing options except "Semua Kategori"
+            categorySelect.innerHTML = '<option value="all">Semua Kategori</option>';
+            
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = category;
+                option.textContent = category;
+                categorySelect.appendChild(option);
+            });
+        }
+
+        // Fungsi untuk render investments
+        function renderInvestments() {
+            const container = document.getElementById('investmentsGrid');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (filteredData.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            const cardsHTML = filteredData.map((item, index) => {
+                const percentage = totalInvestasi > 0 ? (item.jumlah / totalInvestasi) * 100 : 0;
+                const status = getInvestmentStatus(item.tanggal_investasi);
+                
+                return `
+                    <div class="investment-card" 
+                         data-category="${item.nama_kategori}"
+                         data-amount="${item.jumlah}"
+                         data-date="${item.tanggal_investasi}"
+                         data-title="${item.judul_investasi}"
+                         style="--animation-delay: ${index * 0.1}s">
+                        
+                        <div class="card-glow"></div>
+                        
+                        <div class="card-header">
+                            <div class="card-header-content">
+                                <h2 class="card-title">
+                                    <i class="fas fa-chart-pie card-title-icon"></i>
+                                    ${item.judul_investasi}
+                                </h2>
+                                <div class="category-badge">
+                                    <i class="fas fa-tag"></i>
+                                    ${item.nama_kategori}
+                                </div>
+                            </div>
+                            <div class="card-menu">
+                                <button class="menu-btn">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card-body">
+                            <div class="amount-section">
+                                <div class="amount-header">
+                                    <span class="amount-label">
+                                        <i class="fas fa-coins"></i>
+                                        Nilai Investasi
+                                    </span>
+                                    <div class="amount-trend positive">
+                                        <i class="fas fa-arrow-up"></i>
+                                        <span>+2.5%</span>
+                                    </div>
+                                </div>
+                                <div class="amount-value-container">
+                                    <span class="amount-value" data-amount="${item.jumlah}">
+                                        Rp ${formatRupiah(item.jumlah)}
+                                    </span>
+                                    <div class="amount-progress">
+                                        <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="date-section">
+                                <div class="date-info">
+                                    <i class="fas fa-calendar-alt date-icon"></i>
+                                    <div class="date-content">
+                                        <span class="date-label">Tanggal Investasi</span>
+                                        <span class="date-value">${formatTanggal(item.tanggal_investasi)}</span>
+                                    </div>
+                                </div>
+                                <div class="time-badge">
+                                    ${status}
+                                </div>
+                            </div>
+                            
+                            ${item.deskripsi ? `
+                                <div class="description-section">
+                                    <div class="description-header">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span>Deskripsi</span>
+                                    </div>
+                                    <p class="description-text">${item.deskripsi.replace(/\n/g, '<br>')}</p>
+                                </div>
+                            ` : ''}
+                            
+                            <div class="card-actions">
+                                <button class="action-btn primary">
+                                    <i class="fas fa-eye"></i>
+                                    Detail
+                                </button>
+                                <button class="action-btn secondary">
+                                    <i class="fas fa-share-alt"></i>
+                                    Bagikan
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="performance-indicator">
+                                <div class="indicator-dot positive"></div>
+                                <span class="performance-text">Performa Baik</span>
+                            </div>
+                            <div class="investment-id">#INV-${String(item.id).padStart(4, '0')}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            container.innerHTML = cardsHTML;
+            
+            // Re-attach event listeners untuk card interactions
+            attachCardEventListeners();
+        }
+
+        // Fungsi untuk menampilkan empty state
+        function showEmptyState() {
+            document.getElementById('investmentsGrid').innerHTML = '';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        // Fungsi untuk attach event listeners pada cards
+        function attachCardEventListeners() {
+            document.querySelectorAll('.investment-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.querySelector('.card-glow').style.opacity = '1';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.querySelector('.card-glow').style.opacity = '0';
+                });
+            });
+        }
+
+        // Fungsi untuk sorting data
+        function sortData(criteria) {
+            switch(criteria) {
+                case 'date-desc':
+                    filteredData.sort((a, b) => new Date(b.tanggal_investasi) - new Date(a.tanggal_investasi));
+                    break;
+                case 'date-asc':
+                    filteredData.sort((a, b) => new Date(a.tanggal_investasi) - new Date(b.tanggal_investasi));
+                    break;
+                case 'amount-desc':
+                    filteredData.sort((a, b) => parseFloat(b.jumlah) - parseFloat(a.jumlah));
+                    break;
+                case 'amount-asc':
+                    filteredData.sort((a, b) => parseFloat(a.jumlah) - parseFloat(b.jumlah));
+                    break;
+            }
+            renderInvestments();
+        }
+
+        // Fungsi untuk filter berdasarkan kategori
+        function filterByCategory(category) {
+            if (category === 'all') {
+                filteredData = [...investasiData];
+            } else {
+                filteredData = investasiData.filter(item => item.nama_kategori === category);
+            }
+            renderInvestments();
+        }
+
+        // Fungsi untuk search
+        function searchInvestments(keyword) {
+            keyword = keyword.toLowerCase();
+            if (keyword === '') {
+                filteredData = [...investasiData];
+            } else {
+                filteredData = investasiData.filter(item => 
+                    item.judul_investasi.toLowerCase().includes(keyword) ||
+                    item.nama_kategori.toLowerCase().includes(keyword) ||
+                    item.deskripsi.toLowerCase().includes(keyword)
+                );
+            }
+            renderInvestments();
+        }
+
+        // Event Listeners
+        document.getElementById('sortSelect').addEventListener('change', function() {
+            sortData(this.value);
+        });
+
+        document.getElementById('categoryFilter').addEventListener('change', function() {
+            filterByCategory(this.value);
+        });
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            searchInvestments(this.value);
+        });
+
+        // View Toggle
+        document.querySelectorAll('.toggle-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                
+                const view = this.dataset.view;
+                const grid = document.getElementById('investmentsGrid');
+                grid.className = view === 'list' ? 'investments-list' : 'investments-grid';
+            });
+        });
+
         // Loading Animation
         window.addEventListener('load', function() {
             const loadingOverlay = document.getElementById('loadingOverlay');
@@ -368,70 +548,6 @@ foreach ($investasi as $item) {
         
         createParticles();
 
-        // Investment Card Interactions
-        document.querySelectorAll('.investment-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.querySelector('.card-glow').style.opacity = '1';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.querySelector('.card-glow').style.opacity = '0';
-            });
-        });
-
-        // Counter Animation for Values
-        function animateCounters() {
-            document.querySelectorAll('[data-value]').forEach(counter => {
-                const target = parseInt(counter.dataset.value);
-                const duration = 2000;
-                const step = target / (duration / 16);
-                let current = 0;
-                
-                const timer = setInterval(() => {
-                    current += step;
-                    if (current >= target) {
-                        current = target;
-                        clearInterval(timer);
-                    }
-                    counter.textContent = 'Rp ' + Math.floor(current).toLocaleString('id-ID');
-                }, 16);
-            });
-        }
-
-        // Filter and Search Functionality
-        document.getElementById('sortSelect').addEventListener('change', function() {
-            // Sort implementation here
-        });
-
-        document.getElementById('categoryFilter').addEventListener('change', function() {
-            // Filter implementation here
-        });
-
-        document.getElementById('searchInput').addEventListener('input', function() {
-            // Search implementation here
-            keyword = this.value.toLowerCase();
-            document.querySelectorALL('.investment-card').foreach(card => {
-                const title = card.dataset.title.toLowerCase();
-                if (title.includes(keyword)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            })
-        });
-
-        // View Toggle
-        document.querySelectorAll('.toggle-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                
-                const view = this.dataset.view;
-                const grid = document.getElementById('investmentsGrid');
-                grid.className = view === 'list' ? 'investments-list' : 'investments-grid';
-            });
-        });
-
         // Scroll to Top
         const scrollBtn = document.getElementById('scrollToTop');
         window.addEventListener('scroll', function() {
@@ -446,23 +562,13 @@ foreach ($investasi as $item) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // Initialize animations
-        setTimeout(() => {
-            animateCounters();
-        }, 1000);
+        // Auto refresh setiap 30 detik
+        setInterval(() => {
+            fetchInvestasi();
+        }, 30000);
 
-        // Intersection Observer for card animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('animate-in');
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.investment-card').forEach(card => {
-            observer.observe(card);
-        });
+        // Initialize - Load data saat halaman dimuat
+        fetchInvestasi();
     </script>
 </body>
 </html>
