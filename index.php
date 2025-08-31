@@ -270,14 +270,42 @@ foreach ($investasi as $item) {
         // Fungsi untuk fetch data investasi
         async function fetchInvestasi() {
             try {
+                console.log('Fetching data from fetch_investasi.php...'); // Debug log
+                
                 const response = await fetch('fetch_investasi.php');
+                
+                // Check if response is ok
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const contentType = response.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await response.text();
+                    console.error('Response is not JSON:', text);
+                    throw new Error("Response is not JSON");
+                }
+                
                 const data = await response.json();
+                console.log('Data received:', data); // Debug log
+                
+                // Check if data is array
+                if (!Array.isArray(data)) {
+                    console.error('Data is not an array:', data);
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    throw new Error('Invalid data format');
+                }
                 
                 investasiData = data;
                 filteredData = [...data];
                 
                 // Hitung total investasi
-                totalInvestasi = data.reduce((sum, item) => sum + parseFloat(item.jumlah), 0);
+                totalInvestasi = data.reduce((sum, item) => sum + parseFloat(item.jumlah || 0), 0);
+                
+                console.log('Total investasi:', totalInvestasi); // Debug log
+                console.log('Jumlah data:', data.length); // Debug log
                 
                 // Update stats
                 updateStats();
@@ -318,7 +346,10 @@ foreach ($investasi as $item) {
             const container = document.getElementById('investmentsGrid');
             const emptyState = document.getElementById('emptyState');
             
-            if (filteredData.length === 0) {
+            console.log('Rendering investments:', filteredData.length, 'items');
+            
+            if (!filteredData || filteredData.length === 0) {
+                console.log('No data to render, showing empty state');
                 container.innerHTML = '';
                 emptyState.style.display = 'block';
                 return;
@@ -326,110 +357,120 @@ foreach ($investasi as $item) {
             
             emptyState.style.display = 'none';
             
-            const cardsHTML = filteredData.map((item, index) => {
-                const percentage = totalInvestasi > 0 ? (item.jumlah / totalInvestasi) * 100 : 0;
-                const status = getInvestmentStatus(item.tanggal_investasi);
+            try {
+                const cardsHTML = filteredData.map((item, index) => {
+                    console.log('Rendering item:', item);
+                    
+                    const percentage = totalInvestasi > 0 ? (item.jumlah / totalInvestasi) * 100 : 0;
+                    const status = getInvestmentStatus(item.tanggal_investasi);
+                    
+                    return `
+                        <div class="investment-card" 
+                             data-category="${item.nama_kategori || ''}"
+                             data-amount="${item.jumlah || 0}"
+                             data-date="${item.tanggal_investasi || ''}"
+                             data-title="${item.judul_investasi || ''}"
+                             style="--animation-delay: ${index * 0.1}s">
+                            
+                            <div class="card-glow"></div>
+                            
+                            <div class="card-header">
+                                <div class="card-header-content">
+                                    <h2 class="card-title">
+                                        <i class="fas fa-chart-pie card-title-icon"></i>
+                                        ${item.judul_investasi || 'Tidak ada judul'}
+                                    </h2>
+                                    <div class="category-badge">
+                                        <i class="fas fa-tag"></i>
+                                        ${item.nama_kategori || 'Tidak ada kategori'}
+                                    </div>
+                                </div>
+                                <div class="card-menu">
+                                    <button class="menu-btn">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <div class="amount-section">
+                                    <div class="amount-header">
+                                        <span class="amount-label">
+                                            <i class="fas fa-coins"></i>
+                                            Nilai Investasi
+                                        </span>
+                                        <div class="amount-trend positive">
+                                            <i class="fas fa-arrow-up"></i>
+                                            <span>+2.5%</span>
+                                        </div>
+                                    </div>
+                                    <div class="amount-value-container">
+                                        <span class="amount-value" data-amount="${item.jumlah || 0}">
+                                            Rp ${formatRupiah(item.jumlah || 0)}
+                                        </span>
+                                        <div class="amount-progress">
+                                            <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="date-section">
+                                    <div class="date-info">
+                                        <i class="fas fa-calendar-alt date-icon"></i>
+                                        <div class="date-content">
+                                            <span class="date-label">Tanggal Investasi</span>
+                                            <span class="date-value">${formatTanggal(item.tanggal_investasi || new Date())}</span>
+                                        </div>
+                                    </div>
+                                    <div class="time-badge">
+                                        ${status}
+                                    </div>
+                                </div>
+                                
+                                ${item.deskripsi ? `
+                                    <div class="description-section">
+                                        <div class="description-header">
+                                            <i class="fas fa-info-circle"></i>
+                                            <span>Deskripsi</span>
+                                        </div>
+                                        <p class="description-text">${(item.deskripsi || '').replace(/\n/g, '<br>')}</p>
+                                    </div>
+                                ` : ''}
+                                
+                                <div class="card-actions">
+                                    <button class="action-btn primary">
+                                        <i class="fas fa-eye"></i>
+                                        Detail
+                                    </button>
+                                    <button class="action-btn secondary">
+                                        <i class="fas fa-share-alt"></i>
+                                        Bagikan
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="card-footer">
+                                <div class="performance-indicator">
+                                    <div class="indicator-dot positive"></div>
+                                    <span class="performance-text">Performa Baik</span>
+                                </div>
+                                <div class="investment-id">#INV-${String(item.id || 0).padStart(4, '0')}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
                 
-                return `
-                    <div class="investment-card" 
-                         data-category="${item.nama_kategori}"
-                         data-amount="${item.jumlah}"
-                         data-date="${item.tanggal_investasi}"
-                         data-title="${item.judul_investasi}"
-                         style="--animation-delay: ${index * 0.1}s">
-                        
-                        <div class="card-glow"></div>
-                        
-                        <div class="card-header">
-                            <div class="card-header-content">
-                                <h2 class="card-title">
-                                    <i class="fas fa-chart-pie card-title-icon"></i>
-                                    ${item.judul_investasi}
-                                </h2>
-                                <div class="category-badge">
-                                    <i class="fas fa-tag"></i>
-                                    ${item.nama_kategori}
-                                </div>
-                            </div>
-                            <div class="card-menu">
-                                <button class="menu-btn">
-                                    <i class="fas fa-ellipsis-v"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="card-body">
-                            <div class="amount-section">
-                                <div class="amount-header">
-                                    <span class="amount-label">
-                                        <i class="fas fa-coins"></i>
-                                        Nilai Investasi
-                                    </span>
-                                    <div class="amount-trend positive">
-                                        <i class="fas fa-arrow-up"></i>
-                                        <span>+2.5%</span>
-                                    </div>
-                                </div>
-                                <div class="amount-value-container">
-                                    <span class="amount-value" data-amount="${item.jumlah}">
-                                        Rp ${formatRupiah(item.jumlah)}
-                                    </span>
-                                    <div class="amount-progress">
-                                        <div class="progress-bar" style="width: ${Math.min(percentage, 100)}%"></div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="date-section">
-                                <div class="date-info">
-                                    <i class="fas fa-calendar-alt date-icon"></i>
-                                    <div class="date-content">
-                                        <span class="date-label">Tanggal Investasi</span>
-                                        <span class="date-value">${formatTanggal(item.tanggal_investasi)}</span>
-                                    </div>
-                                </div>
-                                <div class="time-badge">
-                                    ${status}
-                                </div>
-                            </div>
-                            
-                            ${item.deskripsi ? `
-                                <div class="description-section">
-                                    <div class="description-header">
-                                        <i class="fas fa-info-circle"></i>
-                                        <span>Deskripsi</span>
-                                    </div>
-                                    <p class="description-text">${item.deskripsi.replace(/\n/g, '<br>')}</p>
-                                </div>
-                            ` : ''}
-                            
-                            <div class="card-actions">
-                                <button class="action-btn primary">
-                                    <i class="fas fa-eye"></i>
-                                    Detail
-                                </button>
-                                <button class="action-btn secondary">
-                                    <i class="fas fa-share-alt"></i>
-                                    Bagikan
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <div class="card-footer">
-                            <div class="performance-indicator">
-                                <div class="indicator-dot positive"></div>
-                                <span class="performance-text">Performa Baik</span>
-                            </div>
-                            <div class="investment-id">#INV-${String(item.id).padStart(4, '0')}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-            
-            container.innerHTML = cardsHTML;
-            
-            // Re-attach event listeners untuk card interactions
-            attachCardEventListeners();
+                console.log('Generated HTML length:', cardsHTML.length);
+                container.innerHTML = cardsHTML;
+                console.log('Cards rendered successfully');
+                
+                // Re-attach event listeners untuk card interactions
+                attachCardEventListeners();
+                
+            } catch (error) {
+                console.error('Error rendering investments:', error);
+                container.innerHTML = '<div class="error-message">Error rendering investments: ' + error.message + '</div>';
+            }
         }
 
         // Fungsi untuk menampilkan empty state
@@ -483,15 +524,32 @@ foreach ($investasi as $item) {
         // Fungsi untuk search
         function searchInvestments(keyword) {
             keyword = keyword.toLowerCase();
-            if (keyword === '') {
-                filteredData = [...investasiData];
-            } else {
-                filteredData = investasiData.filter(item => 
-                    item.judul_investasi.toLowerCase().includes(keyword) ||
-                    item.nama_kategori.toLowerCase().includes(keyword) ||
-                    item.deskripsi.toLowerCase().includes(keyword)
-                );
+            
+            // Get current category filter
+            const currentCategory = document.getElementById('categoryFilter').value;
+            
+            // Start with original data or filtered by category
+            let dataToFilter = investasiData;
+            if (currentCategory !== 'all') {
+                dataToFilter = investasiData.filter(item => item.nama_kategori === currentCategory);
             }
+            
+            // Apply search filter
+            if (keyword === '') {
+                filteredData = dataToFilter;
+            } else {
+                filteredData = dataToFilter.filter(item => {
+                    const judul = (item.judul_investasi || '').toLowerCase();
+                    const kategori = (item.nama_kategori || '').toLowerCase();
+                    const deskripsi = (item.deskripsi || '').toLowerCase();
+                    
+                    return judul.includes(keyword) || 
+                           kategori.includes(keyword) || 
+                           deskripsi.includes(keyword);
+                });
+            }
+            
+            console.log('Search results:', filteredData.length, 'items'); // Debug log
             renderInvestments();
         }
 
@@ -568,7 +626,32 @@ foreach ($investasi as $item) {
         }, 30000);
 
         // Initialize - Load data saat halaman dimuat
-        fetchInvestasi();
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, starting initialization...');
+            
+            // Test if fetch_investasi.php is accessible
+            fetch('fetch_investasi.php')
+                .then(response => {
+                    console.log('Initial response status:', response.status);
+                    console.log('Initial response headers:', response.headers.get('content-type'));
+                    return response.text();
+                })
+                .then(text => {
+                    console.log('Raw response:', text);
+                    try {
+                        const data = JSON.parse(text);
+                        console.log('Parsed JSON:', data);
+                    } catch(e) {
+                        console.error('JSON parse error:', e);
+                        console.error('Response was:', text);
+                    }
+                })
+                .catch(error => {
+                    console.error('Fetch test error:', error);
+                });
+            
+            fetchInvestasi();
+        });
     </script>
 </body>
 </html>
