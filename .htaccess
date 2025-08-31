@@ -1,0 +1,30 @@
+# Aktifkan mod_rewrite
+RewriteEngine On
+
+# Redirect www ke non-www (opsional)
+RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+
+# Redirect HTTP ke HTTPS (jika SSL aktif)
+RewriteCond %{HTTPS} off
+RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Atur index file default
+DirectoryIndex index.php index.html
+
+# Blokir akses ke file .htaccess itu sendiri
+<Files .htaccess>
+    Order allow,deny
+    Deny from all
+</Files>
+
+# Lindungi file konfigurasi penting (opsional)
+<FilesMatch "(^\.env|config\.php|config\.ini|db\.php)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Contoh URL rewriting untuk clean URL (jika Anda ingin)
+# RewriteCond %{REQUEST_FILENAME} !-f
+# RewriteCond %{REQUEST_FILENAME} !-d
+# RewriteRule ^(.+)$ index.php?url=$1 [QSA,L]
