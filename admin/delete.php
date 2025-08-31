@@ -1,5 +1,12 @@
 <?php
+session_start(); // mulai session
 require_once "../config.php";
+
+// cek apakah user sudah login
+if (!isset($_SESSION['user_id'])) {
+    header("Location: auth.php");
+    exit;
+}
 
 // Cek apakah parameter id ada dan valid
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
