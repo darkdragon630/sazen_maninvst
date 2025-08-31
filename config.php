@@ -15,7 +15,7 @@ $options = [
 ];
 
 try {
-    $koneksi = new PDO($dsn, $user, $pass, $port, $options);
+    $koneksi = new PDO($dsn, $user, $pass, $options);
     $koneksi->exec("SET NAMES 'utf8'");
 } catch (PDOException $e) {
     die('koneksi gagal: ' . $e->getMessage());
