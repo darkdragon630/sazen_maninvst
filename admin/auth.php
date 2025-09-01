@@ -3,7 +3,7 @@ session_start();
 require_once "../config.php";
 
 // Regenerate session ID untuk keamanan
-session_regenerate_id(true);
+//session_regenerate_id(true);
 
 // Redirect jika sudah login
 if (isset($_SESSION['user_id'])) {
