@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Aug 31, 2025 at 06:35 PM
+-- Generation Time: Sep 01, 2025 at 09:55 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -30,6 +30,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `investasi` (
   `id` int(11) NOT NULL,
   `judul_investasi` varchar(100) NOT NULL,
+  `jumlah_investasi` decimal(15,2) NOT NULL,
   `deskripsi` text DEFAULT NULL,
   `jumlah` decimal(15,2) NOT NULL,
   `tanggal_investasi` date NOT NULL,
@@ -65,6 +66,27 @@ INSERT INTO `kategori` (`id`, `nama_kategori`, `deskripsi`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `keuntungan_investasi`
+--
+
+CREATE TABLE `keuntungan_investasi` (
+  `id` int(11) NOT NULL,
+  `investasi_id` int(11) NOT NULL,
+  `kategori_id` int(11) NOT NULL,
+  `judul_keuntungan` varchar(255) NOT NULL,
+  `deskripsi` text DEFAULT NULL,
+  `jumlah_keuntungan` decimal(15,2) NOT NULL,
+  `persentase_keuntungan` decimal(5,2) DEFAULT NULL,
+  `tanggal_keuntungan` date NOT NULL,
+  `sumber_keuntungan` enum('dividen','capital_gain','bunga','bonus','lainnya') DEFAULT 'lainnya',
+  `status` enum('realized','unrealized') DEFAULT 'realized',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `users`
 --
 
@@ -95,6 +117,16 @@ ALTER TABLE `kategori`
   ADD UNIQUE KEY `nama_kategori` (`nama_kategori`);
 
 --
+-- Indexes for table `keuntungan_investasi`
+--
+ALTER TABLE `keuntungan_investasi`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_investasi_id` (`investasi_id`),
+  ADD KEY `idx_kategori_id` (`kategori_id`),
+  ADD KEY `idx_tanggal_keuntungan` (`tanggal_keuntungan`),
+  ADD KEY `idx_status` (`status`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -119,6 +151,12 @@ ALTER TABLE `kategori`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
+-- AUTO_INCREMENT for table `keuntungan_investasi`
+--
+ALTER TABLE `keuntungan_investasi`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
@@ -133,6 +171,13 @@ ALTER TABLE `users`
 --
 ALTER TABLE `investasi`
   ADD CONSTRAINT `investasi_ibfk_1` FOREIGN KEY (`kategori_id`) REFERENCES `kategori` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `keuntungan_investasi`
+--
+ALTER TABLE `keuntungan_investasi`
+  ADD CONSTRAINT `keuntungan_investasi_ibfk_1` FOREIGN KEY (`investasi_id`) REFERENCES `investasi` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `keuntungan_investasi_ibfk_2` FOREIGN KEY (`kategori_id`) REFERENCES `kategori` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
