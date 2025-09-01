@@ -3,71 +3,83 @@
 session_start();
 header('Content-Type: application/json');
 
+// =========================
+// KONFIGURASI
+// =========================
+define('RATE_LIMIT_WINDOW', 60); // detik
+define('RATE_LIMIT_MAX', 10);     // maksimal request per window
+define('LOG_FILE', __DIR__ . '/../logs/security.log');
+
 /* =========================
    FUNGSIONAL CSRF
 ========================= */
 function generate_csrf_token() {
-    return bin2hex(random_bytes(32)); // 32-byte = 64 hex chars
+    return bin2hex(random_bytes(32)); // 32-byte = 64 karakter hex
 }
 
 /* =========================
    LOGGING SECURITY
 ========================= */
 function log_security_event($event, $details = '') {
-    $log_file = __DIR__ . "/../logs/security.log";
-    $log_entry = date('Y-m-d H:i:s') . " | " . ($_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN') . " | $event | $details" . PHP_EOL;
-    error_log($log_entry, 3, $log_file);
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+    $log_entry = date('Y-m-d H:i:s') . " | $ip | $event | $details" . PHP_EOL;
+    error_log($log_entry, 3, LOG_FILE);
 }
 
-try {
-    // Hanya POST request yang diizinkan
-    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        http_response_code(405);
-        log_security_event("CSRF_REFRESH_METHOD_NOT_ALLOWED", "Method: {$_SERVER['REQUEST_METHOD']}");
-        echo json_encode(['error' => 'Method not allowed']);
-        exit;
-    }
+/* =========================
+   RESPON JSON
+========================= */
+function respond($status_code, $data) {
+    http_response_code($status_code);
+    echo json_encode($data);
+    exit;
+}
 
-    /* =========================
-       RATE LIMITING PER IP
-    ========================= */
-    $ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
-    $current_time = time();
-    $rate_limit_key = "csrf_refresh_$ip";
+/* =========================
+   PENGECEKAN METODE
+========================= */
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    log_security_event("CSRF_REFRESH_METHOD_NOT_ALLOWED", "Method: {$_SERVER['REQUEST_METHOD']}");
+    respond(405, ['error' => 'Method not allowed. Gunakan POST.']);
+}
 
-    if (!isset($_SESSION[$rate_limit_key])) {
-        $_SESSION[$rate_limit_key] = ['count' => 0, 'time' => $current_time];
-    }
+/* =========================
+   RATE LIMITING PER IP
+========================= */
+$ip = $_SERVER['REMOTE_ADDR'] ?? 'UNKNOWN';
+$current_time = time();
+$rate_key = "csrf_refresh_$ip";
 
-    $rate_data = $_SESSION[$rate_limit_key];
+if (!isset($_SESSION[$rate_key])) {
+    $_SESSION[$rate_key] = ['count' => 1, 'time' => $current_time];
+} else {
+    $rate_data = $_SESSION[$rate_key];
 
-    // Reset counter jika lebih dari 60 detik
-    if ($current_time - $rate_data['time'] > 60) {
-        $_SESSION[$rate_limit_key] = ['count' => 1, 'time' => $current_time];
+    // Reset counter jika lebih dari window
+    if ($current_time - $rate_data['time'] > RATE_LIMIT_WINDOW) {
+        $_SESSION[$rate_key] = ['count' => 1, 'time' => $current_time];
     } else {
-        $_SESSION[$rate_limit_key]['count']++;
-        if ($_SESSION[$rate_limit_key]['count'] > 10) {
-            log_security_event("CSRF_REFRESH_RATE_LIMIT", "IP: $ip");
-            http_response_code(429);
-            echo json_encode(['error' => 'Rate limit exceeded. Coba lagi nanti.']);
-            exit;
+        $_SESSION[$rate_key]['count']++;
+        if ($_SESSION[$rate_key]['count'] > RATE_LIMIT_MAX) {
+            log_security_event("CSRF_REFRESH_RATE_LIMIT", "IP: $ip, Count: " . $_SESSION[$rate_key]['count']);
+            respond(429, ['error' => 'Rate limit exceeded. Coba lagi nanti.']);
         }
     }
+}
 
-    /* =========================
-       GENERATE TOKEN BARU
-    ========================= */
+/* =========================
+   GENERATE TOKEN BARU
+========================= */
+try {
     $_SESSION['csrf_token'] = generate_csrf_token();
     log_security_event("CSRF_TOKEN_REFRESHED", "IP: $ip");
 
-    echo json_encode([
+    respond(200, [
         'success' => true,
         'token' => $_SESSION['csrf_token']
     ]);
 
 } catch (Exception $e) {
     log_security_event("CSRF_REFRESH_ERROR", $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => 'Internal server error']);
+    respond(500, ['error' => 'Internal server error']);
 }
-?>
