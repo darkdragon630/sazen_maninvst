@@ -3,7 +3,7 @@ session_start();
 require_once "../config.php";
 
 // Regenerate session ID untuk keamanan
-//session_regenerate_id(true);
+session_regenerate_id(true);
 
 // Redirect jika sudah login
 if (isset($_SESSION['user_id'])) {
@@ -175,9 +175,7 @@ if (isset($_POST['register'])) {
                     $error = ($existing_user['username'] === $username) ? "❌ Username sudah digunakan." : "❌ Email sudah terdaftar.";
                     log_security_event("REGISTER_DUPLICATE", "Username: $username, Email: $email");
                 } else {
-                    // Gunakan Bcrypt
                     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
-
                     $stmt = $koneksi->prepare("INSERT INTO users (username, email, password, created_at, failed_attempts, locked_until) VALUES (?, ?, ?, NOW(), 0, NULL)");
                     if ($stmt->execute([$username, $email, $hashed_password])) {
                         $_SESSION['reg_success'] = "✅ Akun berhasil dibuat! Silakan login.";
@@ -198,6 +196,9 @@ if (isset($_POST['register'])) {
 }
 ?>
 
+<!-- ========================================
+     HTML LOGIN & REGISTER FORM
+======================================== -->
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -207,7 +208,6 @@ if (isset($_POST['register'])) {
 <link rel="stylesheet" href="../assets/css/auth.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Password Strength Indicator */
 .password-strength { margin-top: 5px; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; transition: all 0.3s ease; }
 .strength-bar { height: 100%; transition: all 0.3s ease; border-radius: 2px; }
 .strength-weak { background: #ff4444; width: 25%; }
@@ -234,10 +234,10 @@ if (isset($_POST['register'])) {
         </div>
 
         <?php if ($error): ?>
-            <div class="message error-message" id="errorMsg"><?= htmlspecialchars($error) ?></div>
+            <div class="message error-message"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
         <?php if ($success): ?>
-            <div class="message success-message" id="successMsg"><?= htmlspecialchars($success) ?></div>
+            <div class="message success-message"><?= htmlspecialchars($success) ?></div>
         <?php endif; ?>
 
         <!-- Login Form -->
@@ -248,9 +248,7 @@ if (isset($_POST['register'])) {
                     <label for="username">👤 Username</label>
                     <input type="text" id="username" name="username" 
                            value="<?= isset($_POST['username']) ? htmlspecialchars($_POST['username']) : '' ?>" 
-                           pattern="[a-zA-Z0-9_]{3,20}" 
-                           title="Username hanya boleh huruf, angka, dan underscore (3-20 karakter)"
-                           required>
+                           pattern="[a-zA-Z0-9_]{3,20}" required>
                 </div>
                 <div class="form-group">
                     <label for="password">🔒 Password</label>
@@ -268,17 +266,16 @@ if (isset($_POST['register'])) {
                     <label for="reg_username">👤 Username</label>
                     <input type="text" id="reg_username" name="reg_username" 
                            value="<?= isset($_POST['reg_username']) ? htmlspecialchars($_POST['reg_username']) : '' ?>" 
-                           pattern="[a-zA-Z0-9_]{3,20}" title="Username hanya boleh huruf, angka, dan underscore (3-20 karakter)" required>
+                           pattern="[a-zA-Z0-9_]{3,20}" required>
                 </div>
                 <div class="form-group">
                     <label for="reg_email">📧 Email</label>
                     <input type="email" id="reg_email" name="reg_email" 
-                           value="<?= isset($_POST['reg_email']) ? htmlspecialchars($_POST['reg_email']) : '' ?>" 
-                           required>
+                           value="<?= isset($_POST['reg_email']) ? htmlspecialchars($_POST['reg_email']) : '' ?>" required>
                 </div>
                 <div class="form-group">
                     <label for="reg_password">🔒 Password</label>
-                    <input type="password" id="reg_password" name="reg_password" minlength="8" title="Minimal 8 karakter dengan huruf besar, kecil, dan angka" required>
+                    <input type="password" id="reg_password" name="reg_password" minlength="8" required>
                     <div class="password-strength" id="passwordStrength"><div class="strength-bar" id="strengthBar"></div></div>
                     <div class="strength-text" id="strengthText"></div>
                 </div>
