@@ -26,8 +26,8 @@ $sql_stats = "
     SELECT 
         COUNT(DISTINCT i.id) as total_investasi,
         COALESCE(SUM(i.jumlah), 0) as total_investasi_nilai,
-        COALESCE(SUM(ki.jumlah), 0) as total_keuntungan,
-        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah), 0)) as total_nilai,
+        COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
+        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah_keuntungan), 0)) as total_nilai,
         COUNT(DISTINCT i.kategori_id) as total_kategori,
         COUNT(DISTINCT ki.id) as total_keuntungan_records
     FROM investasi i
@@ -43,8 +43,8 @@ $sql_kategori = "
         k.nama_kategori, 
         COUNT(DISTINCT i.id) as jumlah, 
         COALESCE(SUM(i.jumlah), 0) as total_investasi,
-        COALESCE(SUM(ki.jumlah), 0) as total_keuntungan,
-        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah), 0)) as total_nilai
+        COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
+        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah_keuntungan), 0)) as total_nilai
     FROM kategori k
     LEFT JOIN investasi i ON k.id = i.kategori_id
     LEFT JOIN keuntungan_investasi ki ON i.id = ki.investasi_id
@@ -60,7 +60,7 @@ $sql_keuntungan = "
     SELECT 
         ki.id,
         ki.judul_keuntungan,
-        ki.jumlah,
+        ki.jumlah_keuntungan,
         ki.persentase_keuntungan,
         ki.tanggal_keuntungan,
         ki.sumber_keuntungan,
