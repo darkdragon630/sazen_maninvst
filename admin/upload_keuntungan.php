@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $deskripsi = trim($_POST['deskripsi'] ?? '');
     
     // Sanitasi angka - support desimal seperti 0.87, 1.234,56 dst
-    $jumlah_keuntungan_raw = trim($_POST['jumlah'] ?? '0');
+    $jumlah_raw = trim($_POST['jumlah'] ?? '0');
     
     // Handle berbagai format input:
     // 1. Format Indonesia: 1.234.567,89 (titik = ribuan, koma = desimal)
