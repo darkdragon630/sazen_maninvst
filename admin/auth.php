@@ -175,11 +175,8 @@ if (isset($_POST['register'])) {
                     $error = ($existing_user['username'] === $username) ? "❌ Username sudah digunakan." : "❌ Email sudah terdaftar.";
                     log_security_event("REGISTER_DUPLICATE", "Username: $username, Email: $email");
                 } else {
-                    $hashed_password = password_hash($password, PASSWORD_ARGON2ID, [
-                        'memory_cost' => 65536,
-                        'time_cost' => 4,
-                        'threads' => 3,
-                    ]);
+                    // Gunakan Bcrypt
+                    $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
                     $stmt = $koneksi->prepare("INSERT INTO users (username, email, password, created_at, failed_attempts, locked_until) VALUES (?, ?, ?, NOW(), 0, NULL)");
                     if ($stmt->execute([$username, $email, $hashed_password])) {
