@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Sep 01, 2025 at 09:55 PM
+-- Generation Time: Sep 01, 2025 at 11:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -30,6 +30,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `investasi` (
   `id` int(11) NOT NULL,
   `judul_investasi` varchar(100) NOT NULL,
+  `nilai_investasi` decimal(15,2) NOT NULL DEFAULT 0.00,
   `jumlah_investasi` decimal(15,2) NOT NULL,
   `deskripsi` text DEFAULT NULL,
   `jumlah` decimal(15,2) NOT NULL,
