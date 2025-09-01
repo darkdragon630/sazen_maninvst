@@ -134,7 +134,7 @@ if (isset($_POST['login'])) {
             }
         }
     } catch (Exception $e) {
-        $error = "❌ Terjadi kesalahan sistem.";
+        $error = "❌ Terjadi kesalahan sistem: " . $e->getMessage();
         log_security_event("LOGIN_ERROR", $e->getMessage());
     }
 }
