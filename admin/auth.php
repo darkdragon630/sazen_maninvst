@@ -178,7 +178,7 @@ if (isset($_POST['register'])) {
                     $hashed_password = password_hash($password, PASSWORD_ARGON2ID, [
                         'memory_cost' => 65536,
                         'time_cost' => 4,
-                        'threads' => 3,
+                        'threads' => 1,
                     ]);
 
                     $stmt = $koneksi->prepare("INSERT INTO users (username, email, password, created_at, failed_attempts, locked_until) VALUES (?, ?, ?, NOW(), 0, NULL)");
