@@ -8,13 +8,42 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Ambil data investasi untuk dropdown (tambahkan jumlah_investasi)
-$sql_investasi = "SELECT i.id, i.judul_investasi, i.jumlah_investasi, k.nama_kategori, i.kategori_id 
-                  FROM investasi i 
-                  JOIN kategori k ON i.kategori_id = k.id 
-                  ORDER BY i.judul_investasi";
-$stmt_investasi = $koneksi->query($sql_investasi);
-$investasi_list = $stmt_investasi->fetchAll();
+// Ambil data investasi untuk dropdown - cek kolom yang tersedia
+try {
+    // Pertama, cek struktur tabel untuk menentukan kolom yang benar
+    $check_columns = $koneksi->query("DESCRIBE investasi")->fetchAll();
+    $column_names = array_column($check_columns, 'Field');
+    
+    // Tentukan nama kolom yang benar untuk jumlah investasi
+    $amount_column = 'jumlah_investasi'; // default
+    if (in_array('jumlah', $column_names)) {
+        $amount_column = 'jumlah';
+    } elseif (in_array('amount', $column_names)) {
+        $amount_column = 'amount';
+    } elseif (in_array('nilai_investasi', $column_names)) {
+        $amount_column = 'nilai_investasi';
+    }
+    
+    $sql_investasi = "SELECT i.id, i.judul_investasi, 
+                             COALESCE(i.{$amount_column}, 0) as jumlah_investasi, 
+                             k.nama_kategori, i.kategori_id 
+                      FROM investasi i 
+                      JOIN kategori k ON i.kategori_id = k.id 
+                      ORDER BY i.judul_investasi";
+    $stmt_investasi = $koneksi->query($sql_investasi);
+    $investasi_list = $stmt_investasi->fetchAll();
+} catch (Exception $e) {
+    // Fallback jika ada error - ambil data tanpa kolom jumlah
+    error_log("INVESTASI_QUERY_ERROR: " . $e->getMessage());
+    $sql_investasi = "SELECT i.id, i.judul_investasi, 
+                             0 as jumlah_investasi, 
+                             k.nama_kategori, i.kategori_id 
+                      FROM investasi i 
+                      JOIN kategori k ON i.kategori_id = k.id 
+                      ORDER BY i.judul_investasi";
+    $stmt_investasi = $koneksi->query($sql_investasi);
+    $investasi_list = $stmt_investasi->fetchAll();
+}
 
 $error = '';
 $success = '';
@@ -42,13 +71,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         try {
             // Auto hitung persentase keuntungan jika belum diisi
             if (is_null($persentase_keuntungan)) {
-                $sql_invest = "SELECT jumlah_investasi FROM investasi WHERE id = ?";
-                $stmt_invest = $koneksi->prepare($sql_invest);
-                $stmt_invest->execute([$investasi_id]);
-                $invest_data = $stmt_invest->fetch();
-                
-                if ($invest_data && $invest_data['jumlah_investasi'] > 0) {
-                    $persentase_keuntungan = ($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100;
+                try {
+                    // Cek kolom yang tersedia di tabel investasi
+                    $amount_column = 'jumlah_investasi'; // default
+                    
+                    // Coba beberapa kemungkinan nama kolom
+                    $possible_columns = ['jumlah_investasi', 'jumlah', 'amount', 'nilai_investasi'];
+                    foreach ($possible_columns as $col) {
+                        try {
+                            $test_sql = "SELECT {$col} FROM investasi WHERE id = ? LIMIT 1";
+                            $test_stmt = $koneksi->prepare($test_sql);
+                            $test_stmt->execute([$investasi_id]);
+                            $amount_column = $col;
+                            break; // Jika berhasil, gunakan kolom ini
+                        } catch (Exception $e) {
+                            continue; // Coba kolom berikutnya
+                        }
+                    }
+                    
+                    $sql_invest = "SELECT {$amount_column} as jumlah_investasi FROM investasi WHERE id = ?";
+                    $stmt_invest = $koneksi->prepare($sql_invest);
+                    $stmt_invest->execute([$investasi_id]);
+                    $invest_data = $stmt_invest->fetch();
+                    
+                    if ($invest_data && $invest_data['jumlah_investasi'] > 0) {
+                        $persentase_keuntungan = ($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100;
+                    }
+                } catch (Exception $e) {
+                    // Jika gagal mendapatkan data investasi, set persentase ke null
+                    error_log("PERCENTAGE_CALC_ERROR: " . $e->getMessage());
+                    $persentase_keuntungan = null;
                 }
             }
             
@@ -419,7 +471,9 @@ if (isset($_SESSION['success'])) {
 
                 <div class="investment-info" id="investmentInfo">
                     <strong>Kategori:</strong> <span id="selectedCategory"></span><br>
-                    <strong>Jumlah Investasi:</strong> Rp <span id="selectedAmount"></span>
+                    <div id="investmentAmountContainer">
+                        <strong>Jumlah Investasi:</strong> Rp <span id="selectedAmount"></span>
+                    </div>
                     <input type="hidden" name="kategori_id" id="kategori_id">
                 </div>
 
