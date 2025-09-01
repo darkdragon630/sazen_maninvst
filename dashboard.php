@@ -81,7 +81,7 @@ $sql_sumber = "
     SELECT 
         sumber_keuntungan,
         COUNT(*) as jumlah,
-        SUM(jumlah) as total
+        SUM(jumlah_keuntungan) as total
     FROM keuntungan_investasi
     GROUP BY sumber_keuntungan
     ORDER BY total DESC
