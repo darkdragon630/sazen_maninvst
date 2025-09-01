@@ -22,7 +22,6 @@ function validate_csrf_token($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// Buat CSRF token jika belum ada
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = generate_csrf_token();
 }
@@ -212,50 +211,15 @@ if (isset($_POST['register'])) {
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 /* Password Strength Indicator */
-.password-strength {
-    margin-top: 5px;
-    height: 4px;
-    background: #e0e0e0;
-    border-radius: 2px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-
-.strength-bar {
-    height: 100%;
-    transition: all 0.3s ease;
-    border-radius: 2px;
-}
-
+.password-strength { margin-top: 5px; height: 4px; background: #e0e0e0; border-radius: 2px; overflow: hidden; transition: all 0.3s ease; }
+.strength-bar { height: 100%; transition: all 0.3s ease; border-radius: 2px; }
 .strength-weak { background: #ff4444; width: 25%; }
 .strength-fair { background: #ffaa00; width: 50%; }
 .strength-good { background: #00aa00; width: 75%; }
 .strength-strong { background: #008800; width: 100%; }
-
-.strength-text {
-    font-size: 12px;
-    margin-top: 2px;
-    font-weight: 500;
-}
-
-.form-submitting {
-    pointer-events: none;
-    opacity: 0.7;
-}
-
-.submit-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-}
-
-.message {
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+.strength-text { font-size: 12px; margin-top: 2px; font-weight: 500; }
+.message { animation: slideIn 0.3s ease; }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 </head>
 <body>
@@ -281,8 +245,8 @@ if (isset($_POST['register'])) {
 
         <!-- Login Form -->
         <div class="tab-content active" id="login">
-            <form method="POST" class="auth-form" id="loginForm">
-                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>" id="loginCsrfToken">
+            <form method="POST" class="auth-form">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <div class="form-group">
                     <label for="username">👤 Username</label>
                     <input type="text" id="username" name="username" 
@@ -295,21 +259,19 @@ if (isset($_POST['register'])) {
                     <label for="password">🔒 Password</label>
                     <input type="password" id="password" name="password" required>
                 </div>
-                <button type="submit" name="login" class="submit-btn" id="loginBtn">Masuk →</button>
+                <button type="submit" name="login" class="submit-btn">Masuk →</button>
             </form>
         </div>
 
         <!-- Register Form -->
         <div class="tab-content" id="register">
-            <form method="POST" class="auth-form" id="registerForm">
-                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>" id="registerCsrfToken">
+            <form method="POST" class="auth-form">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <div class="form-group">
                     <label for="reg_username">👤 Username</label>
                     <input type="text" id="reg_username" name="reg_username" 
                            value="<?= isset($_POST['reg_username']) ? htmlspecialchars($_POST['reg_username']) : '' ?>" 
-                           pattern="[a-zA-Z0-9_]{3,20}"
-                           title="Username hanya boleh huruf, angka, dan underscore (3-20 karakter)"
-                           required>
+                           pattern="[a-zA-Z0-9_]{3,20}" title="Username hanya boleh huruf, angka, dan underscore (3-20 karakter)" required>
                 </div>
                 <div class="form-group">
                     <label for="reg_email">📧 Email</label>
@@ -319,21 +281,15 @@ if (isset($_POST['register'])) {
                 </div>
                 <div class="form-group">
                     <label for="reg_password">🔒 Password</label>
-                    <input type="password" id="reg_password" name="reg_password" 
-                           minlength="8" 
-                           title="Minimal 8 karakter dengan huruf besar, kecil, dan angka"
-                           required>
-                    <div class="password-strength" id="passwordStrength">
-                        <div class="strength-bar" id="strengthBar"></div>
-                    </div>
+                    <input type="password" id="reg_password" name="reg_password" minlength="8" title="Minimal 8 karakter dengan huruf besar, kecil, dan angka" required>
+                    <div class="password-strength" id="passwordStrength"><div class="strength-bar" id="strengthBar"></div></div>
                     <div class="strength-text" id="strengthText"></div>
                 </div>
                 <div class="form-group">
                     <label for="confirm_password">🔒 Konfirmasi Password</label>
-                    <input type="password" id="confirm_password" name="confirm_password" 
-                           minlength="8" required>
+                    <input type="password" id="confirm_password" name="confirm_password" minlength="8" required>
                 </div>
-                <button type="submit" name="register" class="submit-btn" id="registerBtn">Buat Akun →</button>
+                <button type="submit" name="register" class="submit-btn">Buat Akun →</button>
             </form>
         </div>
 
@@ -345,233 +301,53 @@ if (isset($_POST['register'])) {
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Tab switching functionality
+    // Tab switching
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabContents = document.querySelectorAll('.tab-content');
+    tabBtns.forEach(btn => btn.addEventListener('click', function() {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById(this.getAttribute('data-tab')).classList.add('active');
+    }));
 
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', function() {
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            document.getElementById(this.getAttribute('data-tab')).classList.add('active');
-        });
-    });
-
-    // Enhanced form validation
+    // Password strength checker
     const regPassword = document.getElementById('reg_password');
-    const confirmPassword = document.getElementById('confirm_password');
     const strengthBar = document.getElementById('strengthBar');
     const strengthText = document.getElementById('strengthText');
 
-    // Password strength checker
     function checkPasswordStrength(password) {
-        let strength = 0;
-        let feedback = [];
-
-        if (password.length >= 8) strength++;
-        else feedback.push('minimal 8 karakter');
-
-        if (/[a-z]/.test(password)) strength++;
-        else feedback.push('huruf kecil');
-
-        if (/[A-Z]/.test(password)) strength++;
-        else feedback.push('huruf besar');
-
-        if (/[0-9]/.test(password)) strength++;
-        else feedback.push('angka');
-
+        let strength = 0, feedback = [];
+        if (password.length >= 8) strength++; else feedback.push('minimal 8 karakter');
+        if (/[a-z]/.test(password)) strength++; else feedback.push('huruf kecil');
+        if (/[A-Z]/.test(password)) strength++; else feedback.push('huruf besar');
+        if (/[0-9]/.test(password)) strength++; else feedback.push('angka');
         if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
-
         return { strength, feedback };
     }
 
-    // Real-time password strength indicator
     if (regPassword) {
         regPassword.addEventListener('input', function() {
-            const password = this.value;
-            const result = checkPasswordStrength(password);
-            
+            const result = checkPasswordStrength(this.value);
             strengthBar.className = 'strength-bar';
-            
-            if (password.length === 0) {
-                strengthBar.style.width = '0%';
-                strengthText.textContent = '';
-                strengthText.style.color = '';
+            if (this.value.length === 0) {
+                strengthBar.style.width = '0%'; strengthText.textContent = '';
             } else if (result.strength <= 2) {
-                strengthBar.classList.add('strength-weak');
-                strengthText.textContent = 'Lemah - Butuh: ' + result.feedback.join(', ');
-                strengthText.style.color = '#ff4444';
+                strengthBar.classList.add('strength-weak'); strengthText.textContent = 'Lemah - Butuh: ' + result.feedback.join(', ');
             } else if (result.strength === 3) {
-                strengthBar.classList.add('strength-fair');
-                strengthText.textContent = 'Sedang - Butuh: ' + result.feedback.join(', ');
-                strengthText.style.color = '#ffaa00';
+                strengthBar.classList.add('strength-fair'); strengthText.textContent = 'Sedang - Butuh: ' + result.feedback.join(', ');
             } else if (result.strength === 4) {
-                strengthBar.classList.add('strength-good');
-                strengthText.textContent = 'Bagus';
-                strengthText.style.color = '#00aa00';
+                strengthBar.classList.add('strength-good'); strengthText.textContent = 'Bagus';
             } else {
-                strengthBar.classList.add('strength-strong');
-                strengthText.textContent = 'Sangat Kuat';
-                strengthText.style.color = '#008800';
+                strengthBar.classList.add('strength-strong'); strengthText.textContent = 'Sangat Kuat';
             }
         });
     }
 
-    // Password confirmation validation
-    if (confirmPassword) {
-        confirmPassword.addEventListener('input', function() {
-            if (regPassword.value !== this.value) {
-                this.setCustomValidity('Password tidak sama');
-                this.style.borderColor = '#ff4444';
-            } else {
-                this.setCustomValidity('');
-                this.style.borderColor = '#00aa00';
-            }
-        });
-    }
-
-    // Username validation
-    const regUsername = document.getElementById('reg_username');
-    if (regUsername) {
-        regUsername.addEventListener('input', function() {
-            const username = this.value;
-            const isValid = /^[a-zA-Z0-9_]{3,20}$/.test(username);
-            
-            if (username.length > 0) {
-                this.style.borderColor = isValid ? '#00aa00' : '#ff4444';
-            } else {
-                this.style.borderColor = '';
-            }
-        });
-    }
-
-    // Prevent multiple form submissions
-    const forms = document.querySelectorAll('.auth-form');
-    forms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('.submit-btn');
-            
-            // Disable button and show loading state
-            submitBtn.disabled = true;
-            submitBtn.textContent = submitBtn.textContent.includes('Masuk') ? 'Memproses...' : 'Membuat...';
-            this.classList.add('form-submitting');
-            
-            // Re-enable after 3 seconds (safety net)
-            setTimeout(() => {
-                submitBtn.disabled = false;
-                submitBtn.textContent = submitBtn.textContent.includes('Memproses') ? 'Masuk →' : 'Buat Akun →';
-                this.classList.remove('form-submitting');
-            }, 3000);
-        });
-    });
-
-    // Auto-clear messages after 5 seconds
-    const errorMsg = document.getElementById('errorMsg');
-    const successMsg = document.getElementById('successMsg');
-    
-    if (errorMsg) {
-        setTimeout(() => {
-            errorMsg.style.animation = 'slideOut 0.3s ease forwards';
-            setTimeout(() => errorMsg.remove(), 300);
-        }, 5000);
-    }
-    
-    if (successMsg) {
-        setTimeout(() => {
-            successMsg.style.animation = 'slideOut 0.3s ease forwards';
-            setTimeout(() => successMsg.remove(), 300);
-        }, 5000);
-    }
-
-    // CSRF Token monitoring dan refresh
-    function refreshCsrfTokens() {
-        fetch('refresh_csrf.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.token) {
-                document.getElementById('loginCsrfToken').value = data.token;
-                document.getElementById('registerCsrfToken').value = data.token;
-            }
-        })
-        .catch(error => console.error('CSRF refresh error:', error));
-    }
-
-    // Refresh CSRF token setiap 10 menit
-    setInterval(refreshCsrfTokens, 600000);
-
-    // Clear sensitive data on page unload
-    window.addEventListener('beforeunload', function() {
-        const passwordFields = document.querySelectorAll('input[type="password"]');
-        passwordFields.forEach(field => {
-            field.value = '';
-        });
-    });
-
-    // Detect potential token tampering
-    const csrfTokens = document.querySelectorAll('input[name="csrf_token"]');
-    const originalTokens = {};
-    
-    csrfTokens.forEach(token => {
-        originalTokens[token.id] = token.value;
-    });
-
-    // Monitor for token changes
-    setInterval(() => {
-        csrfTokens.forEach(token => {
-            if (token.value !== originalTokens[token.id] && !token.value.match(/^[a-f0-9]{64}$/)) {
-                console.warn('Potential CSRF token tampering detected');
-                // Auto-refresh page for security
-                location.reload();
-            }
-        });
-    }, 5000);
-
-    // Additional security: Clear form data on focus out for sensitive fields
-    const sensitiveFields = document.querySelectorAll('input[type="password"]');
-    sensitiveFields.forEach(field => {
-        field.addEventListener('blur', function() {
-            // Add a small delay before clearing for user experience
-            setTimeout(() => {
-                if (document.activeElement !== this && this.form.querySelector(':focus') === null) {
-                    // Only clear if form is not being submitted
-                    if (!this.form.classList.contains('form-submitting')) {
-                        // Optional: Clear after longer inactivity
-                    }
-                }
-            }, 30000); // 30 seconds
-        });
-    });
+    // Auto-clear messages
+    const messages = document.querySelectorAll('.message');
+    messages.forEach(msg => setTimeout(() => msg.remove(), 5000));
 });
-
-// Additional CSS animations
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideOut {
-        from { opacity: 1; transform: translateY(0); }
-        to { opacity: 0; transform: translateY(-10px); }
-    }
-    
-    .form-group input:focus {
-        outline: none;
-        border-color: #007bff;
-        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
-    }
-    
-    .form-group input.valid {
-        border-color: #00aa00;
-    }
-    
-    .form-group input.invalid {
-        border-color: #ff4444;
-    }
-`;
-document.head.appendChild(style);
 </script>
 </body>
 </html>
