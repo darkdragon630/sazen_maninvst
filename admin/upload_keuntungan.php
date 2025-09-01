@@ -7,22 +7,25 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: auth.php");
     exit;
 }
-try {
-    $amount_column = 'jumlah'; // default column name
-    $possible_columns = ['jumlah', 'amount', 'nilai_investasi'];
-    foreach ($possible_columns as $col) {
-        try {
-            $test_sql = "SELECT {$col} FROM investasi LIMIT 1";
-            $test_stmt = $koneksi->query($test_sql);
-            $amount_column = $col;
-            break;
-        } catch (Exception $e) {
-            continue;
-        }
-    }
 
+// Ambil data investasi untuk dropdown - cek kolom yang tersedia
+try {
+    // Pertama, cek struktur tabel untuk menentukan kolom yang benar
+    $check_columns = $koneksi->query("DESCRIBE investasi")->fetchAll();
+    $column_names = array_column($check_columns, 'Field');
+    
+    // Tentukan nama kolom yang benar untuk jumlah investasi
+    $amount_column = 'jumlah_investasi'; // default
+    if (in_array('jumlah', $column_names)) {
+        $amount_column = 'jumlah';
+    } elseif (in_array('amount', $column_names)) {
+        $amount_column = 'amount';
+    } elseif (in_array('nilai_investasi', $column_names)) {
+        $amount_column = 'nilai_investasi';
+    }
+    
     $sql_investasi = "SELECT i.id, i.judul_investasi, 
-                             COALESCE(i.{$amount_column}, 0) as jumlah, 
+                             COALESCE(i.{$amount_column}, 0) as jumlah_investasi, 
                              k.nama_kategori, i.kategori_id 
                       FROM investasi i 
                       JOIN kategori k ON i.kategori_id = k.id 
@@ -33,7 +36,7 @@ try {
     // Fallback jika ada error - ambil data tanpa kolom jumlah
     error_log("INVESTASI_QUERY_ERROR: " . $e->getMessage());
     $sql_investasi = "SELECT i.id, i.judul_investasi, 
-                             0 as jumlah, 
+                             0 as jumlah_investasi, 
                              k.nama_kategori, i.kategori_id 
                       FROM investasi i 
                       JOIN kategori k ON i.kategori_id = k.id 
@@ -52,50 +55,50 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $judul_keuntungan = trim($_POST['judul_keuntungan'] ?? '');
     $deskripsi = trim($_POST['deskripsi'] ?? '');
     
-    // Sanitasi angka - support desimal seperti 0.87, 1.234,56 dst
-    $jumlah_raw = trim($_POST['jumlah'] ?? '0');
-    
-    // Handle berbagai format input:
-    // 1. Format Indonesia: 1.234.567,89 (titik = ribuan, koma = desimal)
-    // 2. Format International: 1,234,567.89 (koma = ribuan, titik = desimal)  
-    // 3. Format sederhana: 1234567.89 atau 0.87
-    
-    // Deteksi format berdasarkan posisi terakhir koma/titik
-    $last_comma = strrpos($jumlah_raw, ',');
-    $last_dot = strrpos($jumlah_raw, '.');
-    
-    if ($last_comma !== false && $last_dot !== false) {
-        // Ada keduanya - yang terakhir adalah desimal
-        if ($last_comma > $last_dot) {
-            // Format Indonesia: 1.234.567,89
-            $jumlah = floatval(str_replace(['.', ','], ['', '.'], $jumlah_raw));
-        } else {
-            // Format International: 1,234,567.89
-            $jumlah = floatval(str_replace(',', '', $jumlah_raw));
-        }
-    } elseif ($last_comma !== false) {
-        // Hanya ada koma
-        $parts = explode(',', $jumlah_raw);
-        if (count($parts) == 2 && strlen($parts[1]) <= 2) {
-            // Kemungkinan desimal: 0,87 atau 1234,56
-            $jumlah = floatval(str_replace(',', '.', $jumlah_raw));
-        } else {
-            // Kemungkinan ribuan: 1,234,567
-            $jumlah = floatval(str_replace(',', '', $jumlah_raw));
-        }
-    } elseif ($last_dot !== false) {
-        // Hanya ada titik
-        $parts = explode('.', $jumlah_raw);
-        if (count($parts) == 2 && strlen($parts[1]) <= 2 && strlen($parts[0]) <= 3) {
-            // Kemungkinan desimal sederhana: 0.87 atau 123.45
-            $jumlah = floatval($jumlah_raw);
-        } else {
-            // Kemungkinan ribuan: 1.234.567
-            $jumlah = floatval(str_replace('.', '', $jumlah_raw));
-        }
+    // Prioritas: gunakan nilai parsed dari JavaScript jika ada
+    if (isset($_POST['jumlah_keuntungan_parsed']) && !empty($_POST['jumlah_keuntungan_parsed'])) {
+        $jumlah_keuntungan = floatval($_POST['jumlah_keuntungan_parsed']);
     } else {
-        // Hanya angka tanpa pemisah
-        $jumlah = floatval($jumlah_raw);
+        // Fallback: parse manual jika JavaScript tidak jalan
+        $jumlah_keuntungan_raw = trim($_POST['jumlah_keuntungan'] ?? '0');
+        
+        // Handle berbagai format input dengan presisi tinggi
+        $last_comma = strrpos($jumlah_keuntungan_raw, ',');
+        $last_dot = strrpos($jumlah_keuntungan_raw, '.');
+        
+        if ($last_comma !== false && $last_dot !== false) {
+            // Ada keduanya - yang terakhir adalah desimal
+            if ($last_comma > $last_dot) {
+                // Format Indonesia: 1.234.567,89
+                $jumlah_keuntungan = floatval(str_replace(['.', ','], ['', '.'], $jumlah_keuntungan_raw));
+            } else {
+                // Format International: 1,234,567.89
+                $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
+            }
+        } elseif ($last_comma !== false) {
+            // Hanya ada koma
+            $parts = explode(',', $jumlah_keuntungan_raw);
+            if (count($parts) == 2 && strlen($parts[1]) <= 2) {
+                // Kemungkinan desimal: 0,87 atau 1234,56
+                $jumlah_keuntungan = floatval(str_replace(',', '.', $jumlah_keuntungan_raw));
+            } else {
+                // Kemungkinan ribuan: 1,234,567
+                $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
+            }
+        } elseif ($last_dot !== false) {
+            // Hanya ada titik
+            $parts = explode('.', $jumlah_keuntungan_raw);
+            if (count($parts) == 2 && strlen($parts[1]) <= 2 && strlen($parts[0]) <= 3) {
+                // Kemungkinan desimal sederhana: 0.87 atau 123.45
+                $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
+            } else {
+                // Kemungkinan ribuan: 1.234.567
+                $jumlah_keuntungan = floatval(str_replace('.', '', $jumlah_keuntungan_raw));
+            }
+        } else {
+            // Hanya angka tanpa pemisah
+            $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
+        }
     }
     
     $persentase_keuntungan = !empty($_POST['persentase_keuntungan']) ? floatval($_POST['persentase_keuntungan']) : null;
@@ -103,19 +106,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $sumber_keuntungan = $_POST['sumber_keuntungan'] ?? 'lainnya';
     $status = $_POST['status'] ?? 'realized';
 
-    // Validasi
-    if (empty($investasi_id) || empty($kategori_id) || empty($judul_keuntungan) || $jumlah <= 0 || empty($tanggal_keuntungan)) {
-        $error = 'Semua field wajib diisi dengan benar. Jumlah keuntungan harus lebih dari 0.';
+    // Validasi - izinkan keuntungan 0 (break even)
+    if (empty($investasi_id) || empty($kategori_id) || empty($judul_keuntungan) || $jumlah_keuntungan < 0 || empty($tanggal_keuntungan)) {
+        $error = 'Semua field wajib diisi dengan benar. Jumlah keuntungan tidak boleh negatif.';
     } else {
         try {
             // Auto hitung persentase keuntungan jika belum diisi
             if (is_null($persentase_keuntungan)) {
                 try {
                     // Cek kolom yang tersedia di tabel investasi
-                    $amount_column = 'jumlah'; // default
+                    $amount_column = 'jumlah_investasi'; // default
                     
                     // Coba beberapa kemungkinan nama kolom
-                    $possible_columns = [ 'jumlah', 'amount', 'nilai_investasi'];
+                    $possible_columns = ['jumlah_investasi', 'jumlah', 'amount', 'nilai_investasi'];
                     foreach ($possible_columns as $col) {
                         try {
                             $test_sql = "SELECT {$col} FROM investasi WHERE id = ? LIMIT 1";
@@ -128,13 +131,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         }
                     }
                     
-                    $sql_invest = "SELECT {$amount_column} as jumlah FROM investasi WHERE id = ?";
+                    $sql_invest = "SELECT {$amount_column} as jumlah_investasi FROM investasi WHERE id = ?";
                     $stmt_invest = $koneksi->prepare($sql_invest);
                     $stmt_invest->execute([$investasi_id]);
                     $invest_data = $stmt_invest->fetch();
                     
-                    if ($invest_data && $invest_data['jumlah'] > 0) {
-                        $persentase_keuntungan = round(($jumlah / $invest_data['jumlah']) * 100, 6);
+                    if ($invest_data && $invest_data['jumlah_investasi'] > 0) {
+                        $persentase_keuntungan = round(($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100, 6);
                     }
                 } catch (Exception $e) {
                     // Jika gagal mendapatkan data investasi, set persentase ke null
@@ -144,10 +147,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
             
             $sql = "INSERT INTO keuntungan_investasi 
-                        (investasi_id, kategori_id, judul_keuntungan, deskripsi, jumlah, persentase_keuntungan, tanggal_keuntungan, sumber_keuntungan, status) 
+                        (investasi_id, kategori_id, judul_keuntungan, deskripsi, jumlah_keuntungan, persentase_keuntungan, tanggal_keuntungan, sumber_keuntungan, status) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $koneksi->prepare($sql);
-            $stmt->execute([$investasi_id, $kategori_id, $judul_keuntungan, $deskripsi, $jumlah, $persentase_keuntungan, $tanggal_keuntungan, $sumber_keuntungan, $status]);
+            $stmt->execute([$investasi_id, $kategori_id, $judul_keuntungan, $deskripsi, $jumlah_keuntungan, $persentase_keuntungan, $tanggal_keuntungan, $sumber_keuntungan, $status]);
 
             // Redirect setelah sukses untuk reset form
             $_SESSION['success'] = 'Keuntungan investasi berhasil ditambahkan!';
@@ -501,7 +504,7 @@ if (isset($_SESSION['success'])) {
                             <option value="<?= $inv['id'] ?>" 
                                     data-kategori="<?= $inv['kategori_id'] ?>"
                                     data-nama-kategori="<?= htmlspecialchars($inv['nama_kategori']) ?>"
-                                    data-jumlah="<?= $inv['jumlah'] ?>">
+                                    data-jumlah="<?= $inv['jumlah_investasi'] ?>">
                                 <?= htmlspecialchars($inv['judul_investasi']) ?> (<?= htmlspecialchars($inv['nama_kategori']) ?>)
                             </option>
                         <?php endforeach; ?>
@@ -523,8 +526,8 @@ if (isset($_SESSION['success'])) {
                 </div>
 
                 <div class="form-group">
-                    <label for="jumlah"><i class="fas fa-money-bill"></i> Jumlah Keuntungan (Rp)</label>
-                    <input type="text" name="jumlah" id="jumlah" class="form-control" 
+                    <label for="jumlah_keuntungan"><i class="fas fa-money-bill"></i> Jumlah Keuntungan (Rp)</label>
+                    <input type="text" name="jumlah_keuntungan" id="jumlah_keuntungan" class="form-control" 
                            placeholder="Contoh: 0.87, 1.500, 1500.50, 2.500.000,75" required>
                     <small style="color: #718096; font-size: 12px; margin-top: 5px; display: block;">
                         <i class="fas fa-info-circle"></i> Support format: 0.87 | 1.500 | 1,500.50 | 2.500.000,75
@@ -623,7 +626,7 @@ if (isset($_SESSION['success'])) {
                 investmentInfo.classList.add('show');
                 
                 // Auto calculate percentage if profit amount is already filled
-                const profitAmount = document.getElementById('jumlah').value;
+                const profitAmount = document.getElementById('jumlah_keuntungan').value;
                 if (profitAmount) {
                     calculatePercentage();
                 }
@@ -649,7 +652,7 @@ if (isset($_SESSION['success'])) {
         }
 
         // Format number input with decimal support
-        document.getElementById('jumlah').addEventListener('input', function() {
+        document.getElementById('jumlah_keuntungan').addEventListener('input', function() {
             let value = this.value;
             
             // Jangan format jika user sedang mengetik desimal
@@ -666,7 +669,7 @@ if (isset($_SESSION['success'])) {
         });
 
         // Format angka ketika user selesai mengetik (onblur)
-        document.getElementById('jumlah').addEventListener('blur', function() {
+        document.getElementById('jumlah_keuntungan').addEventListener('blur', function() {
             let value = this.value.trim();
             if (!value || value === '0') return;
             
@@ -751,19 +754,31 @@ if (isset($_SESSION['success'])) {
         // Auto calculate percentage
         function calculatePercentage() {
             const investasiSelect = document.getElementById('investasi_id');
-            const profitInput = document.getElementById('jumlah');
+            const profitInput = document.getElementById('jumlah_keuntungan');
             const percentageInput = document.getElementById('persentase_keuntungan');
             
             const selectedOption = investasiSelect.options[investasiSelect.selectedIndex];
-            const jumlah = parseFloat(selectedOption?.dataset.jumlah || 0);
+            const jumlahInvestasi = parseFloat(selectedOption?.dataset.jumlah || 0);
             
-            if (jumlah > 0 && profitInput.value.trim()) {
+            if (jumlahInvestasi > 0 && profitInput.value.trim()) {
                 // Parse profit value menggunakan function yang sama
                 const profitValue = parseInputValue(profitInput.value.trim());
                 
-                if (profitValue > 0) {
-                    const percentage = (profitValue / jumlah * 100).toFixed(4);
-                    percentageInput.value = percentage;
+                if (profitValue >= 0) { // Allow zero profit
+                    // Hitung persentase dengan presisi tinggi
+                    const percentage = (profitValue / jumlahInvestasi * 100);
+                    
+                    // Format persentase dengan presisi yang sesuai
+                    if (percentage < 0.01) {
+                        // Untuk persentase sangat kecil, gunakan 6 desimal
+                        percentageInput.value = percentage.toFixed(6);
+                    } else if (percentage < 1) {
+                        // Untuk persentase < 1%, gunakan 4 desimal
+                        percentageInput.value = percentage.toFixed(4);
+                    } else {
+                        // Untuk persentase >= 1%, gunakan 2 desimal
+                        percentageInput.value = percentage.toFixed(2);
+                    }
                 }
             } else if (profitInput.value.trim()) {
                 // Jika tidak ada data jumlah investasi, biarkan user mengisi manual
@@ -791,18 +806,32 @@ if (isset($_SESSION['success'])) {
 
         // Form validation before submit
         document.getElementById('profitForm').addEventListener('submit', function(e) {
-            const profitInput = document.getElementById('jumlah');
-            const profitValue = parseInputValue(profitInput.value.trim() || '0');
+            const profitInput = document.getElementById('jumlah_keuntungan');
+            const rawValue = profitInput.value.trim();
             
-            if (!profitInput.value.trim() || profitValue <= 0) {
+            if (!rawValue) {
                 e.preventDefault();
-                alert('Jumlah keuntungan harus diisi dan lebih dari 0');
+                alert('Jumlah keuntungan harus diisi');
                 profitInput.focus();
                 return false;
             }
             
-            // Pastikan nilai yang dikirim sudah dalam format yang benar
-            profitInput.value = profitValue.toString();
+            const profitValue = parseInputValue(rawValue);
+            
+            if (isNaN(profitValue) || profitValue < 0) {
+                e.preventDefault();
+                alert('Jumlah keuntungan harus berupa angka yang valid (boleh 0 atau lebih)');
+                profitInput.focus();
+                return false;
+            }
+            
+            // Set nilai yang akan dikirim dalam format decimal standar (gunakan titik)
+            // Jangan ubah tampilan, tapi pastikan nilai yang dikirim benar
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'jumlah_keuntungan_parsed';
+            hiddenInput.value = profitValue;
+            this.appendChild(hiddenInput);
         });
     </script>
 </body>
