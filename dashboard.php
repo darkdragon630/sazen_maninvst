@@ -413,7 +413,7 @@ if (isset($_POST['logout'])) {
                             
                             <div class="keuntungan-amount">
                                 <i class="fas fa-money-bill-wave"></i>
-                                Rp <?= number_format($profit['jumlah'], 0, ',', '.') ?>
+                                Rp <?= number_format($profit['jumlah_keuntungan'], 0, ',', '.') ?>
                                 <?php if ($profit['persentase_keuntungan']): ?>
                                     <small>(<?= $profit['persentase_keuntungan'] ?>%)</small>
                                 <?php endif; ?>
