@@ -55,9 +55,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $judul_keuntungan = trim($_POST['judul_keuntungan'] ?? '');
     $deskripsi = trim($_POST['deskripsi'] ?? '');
     
-    // Sanitasi angka - hapus pemisah ribuan sebelum floatval
-    $jumlah_keuntungan_raw = $_POST['jumlah_keuntungan'] ?? '0';
-    $jumlah_keuntungan = floatval(str_replace(['.', ','], ['', '.'], $jumlah_keuntungan_raw));
+    // Sanitasi angka - support desimal seperti 0.87, 1.234,56 dst
+    $jumlah_keuntungan_raw = trim($_POST['jumlah_keuntungan'] ?? '0');
+    
+    // Handle berbagai format input:
+    // 1. Format Indonesia: 1.234.567,89 (titik = ribuan, koma = desimal)
+    // 2. Format International: 1,234,567.89 (koma = ribuan, titik = desimal)  
+    // 3. Format sederhana: 1234567.89 atau 0.87
+    
+    // Deteksi format berdasarkan posisi terakhir koma/titik
+    $last_comma = strrpos($jumlah_keuntungan_raw, ',');
+    $last_dot = strrpos($jumlah_keuntungan_raw, '.');
+    
+    if ($last_comma !== false && $last_dot !== false) {
+        // Ada keduanya - yang terakhir adalah desimal
+        if ($last_comma > $last_dot) {
+            // Format Indonesia: 1.234.567,89
+            $jumlah_keuntungan = floatval(str_replace(['.', ','], ['', '.'], $jumlah_keuntungan_raw));
+        } else {
+            // Format International: 1,234,567.89
+            $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
+        }
+    } elseif ($last_comma !== false) {
+        // Hanya ada koma
+        $parts = explode(',', $jumlah_keuntungan_raw);
+        if (count($parts) == 2 && strlen($parts[1]) <= 2) {
+            // Kemungkinan desimal: 0,87 atau 1234,56
+            $jumlah_keuntungan = floatval(str_replace(',', '.', $jumlah_keuntungan_raw));
+        } else {
+            // Kemungkinan ribuan: 1,234,567
+            $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
+        }
+    } elseif ($last_dot !== false) {
+        // Hanya ada titik
+        $parts = explode('.', $jumlah_keuntungan_raw);
+        if (count($parts) == 2 && strlen($parts[1]) <= 2 && strlen($parts[0]) <= 3) {
+            // Kemungkinan desimal sederhana: 0.87 atau 123.45
+            $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
+        } else {
+            // Kemungkinan ribuan: 1.234.567
+            $jumlah_keuntungan = floatval(str_replace('.', '', $jumlah_keuntungan_raw));
+        }
+    } else {
+        // Hanya angka tanpa pemisah
+        $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
+    }
     
     $persentase_keuntungan = !empty($_POST['persentase_keuntungan']) ? floatval($_POST['persentase_keuntungan']) : null;
     $tanggal_keuntungan = $_POST['tanggal_keuntungan'] ?? '';
@@ -486,7 +528,10 @@ if (isset($_SESSION['success'])) {
                 <div class="form-group">
                     <label for="jumlah_keuntungan"><i class="fas fa-money-bill"></i> Jumlah Keuntungan (Rp)</label>
                     <input type="text" name="jumlah_keuntungan" id="jumlah_keuntungan" class="form-control" 
-                           placeholder="0" required>
+                           placeholder="Contoh: 0.87, 1.500, 1500.50, 2.500.000,75" required>
+                    <small style="color: #718096; font-size: 12px; margin-top: 5px; display: block;">
+                        <i class="fas fa-info-circle"></i> Support format: 0.87 | 1.500 | 1,500.50 | 2.500.000,75
+                    </small>
                 </div>
 
                 <div class="form-group">
@@ -564,11 +609,20 @@ if (isset($_SESSION['success'])) {
             const categorySpan = document.getElementById('selectedCategory');
             const categoryInput = document.getElementById('kategori_id');
             const amountSpan = document.getElementById('selectedAmount');
+            const amountContainer = document.getElementById('investmentAmountContainer');
 
             if (selected.value) {
                 categorySpan.textContent = selected.dataset.namaKategori;
                 categoryInput.value = selected.dataset.kategori;
-                amountSpan.textContent = parseFloat(selected.dataset.jumlah).toLocaleString('id-ID');
+                
+                const investmentAmount = parseFloat(selected.dataset.jumlah || 0);
+                if (investmentAmount > 0) {
+                    amountSpan.textContent = investmentAmount.toLocaleString('id-ID');
+                    amountContainer.style.display = 'block';
+                } else {
+                    amountContainer.style.display = 'none';
+                }
+                
                 investmentInfo.classList.add('show');
                 
                 // Auto calculate percentage if profit amount is already filled
@@ -597,17 +651,97 @@ if (isset($_SESSION['success'])) {
             element.querySelector('input').checked = true;
         }
 
-        // Format number input
+        // Format number input with decimal support
         document.getElementById('jumlah_keuntungan').addEventListener('input', function() {
-            // Remove non-numeric characters except decimal point
-            let value = this.value.replace(/[^\d]/g, '');
+            let value = this.value;
             
-            // Format as currency (Indonesian Rupiah style)
-            if (value) {
-                this.value = parseInt(value).toLocaleString('id-ID');
+            // Jangan format jika user sedang mengetik desimal
+            if (value.endsWith('.') || value.endsWith(',') || 
+                (value.includes('.') && value.split('.').pop().length <= 2) ||
+                (value.includes(',') && value.split(',').pop().length <= 2)) {
+                // Biarkan user mengetik, hanya hitung persentase
                 calculatePercentage();
+                return;
+            }
+            
+            // Format hanya untuk tampilan jika sudah lengkap
+            calculatePercentage();
+        });
+
+        // Format angka ketika user selesai mengetik (onblur)
+        document.getElementById('jumlah_keuntungan').addEventListener('blur', function() {
+            let value = this.value.trim();
+            if (!value || value === '0') return;
+            
+            // Parse value menggunakan logika yang sama dengan PHP
+            let numericValue = parseInputValue(value);
+            
+            if (numericValue > 0) {
+                // Format untuk tampilan (gunakan format Indonesia)
+                if (numericValue < 1) {
+                    // Untuk nilai < 1, tampilkan sebagai desimal sederhana
+                    this.value = numericValue.toFixed(2).replace('.', ',');
+                } else {
+                    // Untuk nilai >= 1, gunakan format ribuan Indonesia
+                    this.value = formatIndonesianCurrency(numericValue);
+                }
             }
         });
+
+        // Function untuk parse berbagai format input
+        function parseInputValue(value) {
+            // Remove Rp dan spasi
+            value = value.replace(/Rp\s*/gi, '').trim();
+            
+            let lastComma = value.lastIndexOf(',');
+            let lastDot = value.lastIndexOf('.');
+            
+            if (lastComma !== -1 && lastDot !== -1) {
+                // Ada keduanya - yang terakhir adalah desimal
+                if (lastComma > lastDot) {
+                    // Format Indonesia: 1.234.567,89
+                    return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+                } else {
+                    // Format International: 1,234,567.89
+                    return parseFloat(value.replace(/,/g, ''));
+                }
+            } else if (lastComma !== -1) {
+                // Hanya ada koma
+                let parts = value.split(',');
+                if (parts.length === 2 && parts[1].length <= 2) {
+                    // Kemungkinan desimal: 0,87 atau 1234,56
+                    return parseFloat(value.replace(',', '.'));
+                } else {
+                    // Kemungkinan ribuan: 1,234,567
+                    return parseFloat(value.replace(/,/g, ''));
+                }
+            } else if (lastDot !== -1) {
+                // Hanya ada titik
+                let parts = value.split('.');
+                if (parts.length === 2 && parts[1].length <= 2 && parts[0].length <= 3) {
+                    // Kemungkinan desimal sederhana: 0.87 atau 123.45
+                    return parseFloat(value);
+                } else {
+                    // Kemungkinan ribuan: 1.234.567
+                    return parseFloat(value.replace(/\./g, ''));
+                }
+            } else {
+                // Hanya angka tanpa pemisah
+                return parseFloat(value);
+            }
+        }
+
+        // Function untuk format mata uang Indonesia
+        function formatIndonesianCurrency(value) {
+            let parts = value.toFixed(2).split('.');
+            let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+            
+            if (parts[1] === '00') {
+                return integerPart;
+            } else {
+                return integerPart + ',' + parts[1];
+            }
+        }
 
         // Auto calculate percentage
         function calculatePercentage() {
@@ -618,11 +752,17 @@ if (isset($_SESSION['success'])) {
             const selectedOption = investasiSelect.options[investasiSelect.selectedIndex];
             const jumlahInvestasi = parseFloat(selectedOption?.dataset.jumlah || 0);
             
-            if (jumlahInvestasi > 0 && profitInput.value) {
-                // Remove formatting to get actual number
-                const profitValue = parseFloat(profitInput.value.replace(/\./g, ''));
-                const percentage = (profitValue / jumlahInvestasi * 100).toFixed(2);
-                percentageInput.value = percentage;
+            if (jumlahInvestasi > 0 && profitInput.value.trim()) {
+                // Parse profit value menggunakan function yang sama
+                const profitValue = parseInputValue(profitInput.value.trim());
+                
+                if (profitValue > 0) {
+                    const percentage = (profitValue / jumlahInvestasi * 100).toFixed(4);
+                    percentageInput.value = percentage;
+                }
+            } else if (profitInput.value.trim()) {
+                // Jika tidak ada data jumlah investasi, biarkan user mengisi manual
+                percentageInput.placeholder = 'Silakan isi manual (data investasi tidak tersedia)';
             }
         }
 
