@@ -83,3 +83,4 @@ try {
     log_security_event("CSRF_REFRESH_ERROR", $e->getMessage());
     respond(500, ['error' => 'Internal server error']);
 }
+?>
