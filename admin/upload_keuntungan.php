@@ -7,25 +7,9 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: auth.php");
     exit;
 }
-
-// Ambil data investasi untuk dropdown - cek kolom yang tersedia
-try {
-    // Pertama, cek struktur tabel untuk menentukan kolom yang benar
-    $check_columns = $koneksi->query("DESCRIBE investasi")->fetchAll();
-    $column_names = array_column($check_columns, 'Field');
-    
-    // Tentukan nama kolom yang benar untuk jumlah investasi
-    $amount_column = 'jumlah_investasi'; // default
-    if (in_array('jumlah', $column_names)) {
-        $amount_column = 'jumlah';
-    } elseif (in_array('amount', $column_names)) {
-        $amount_column = 'amount';
-    } elseif (in_array('nilai_investasi', $column_names)) {
-        $amount_column = 'nilai_investasi';
-    }
     
     $sql_investasi = "SELECT i.id, i.judul_investasi, 
-                             COALESCE(i.{$amount_column}, 0) as jumlah_investasi, 
+                             COALESCE(i.{$amount_column}, 0) as jumlah, 
                              k.nama_kategori, i.kategori_id 
                       FROM investasi i 
                       JOIN kategori k ON i.kategori_id = k.id 
@@ -36,7 +20,7 @@ try {
     // Fallback jika ada error - ambil data tanpa kolom jumlah
     error_log("INVESTASI_QUERY_ERROR: " . $e->getMessage());
     $sql_investasi = "SELECT i.id, i.judul_investasi, 
-                             0 as jumlah_investasi, 
+                             0 as jumlah, 
                              k.nama_kategori, i.kategori_id 
                       FROM investasi i 
                       JOIN kategori k ON i.kategori_id = k.id 
@@ -115,10 +99,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             if (is_null($persentase_keuntungan)) {
                 try {
                     // Cek kolom yang tersedia di tabel investasi
-                    $amount_column = 'jumlah_investasi'; // default
+                    $amount_column = 'jumlah'; // default
                     
                     // Coba beberapa kemungkinan nama kolom
-                    $possible_columns = ['jumlah_investasi', 'jumlah', 'amount', 'nilai_investasi'];
+                    $possible_columns = [ 'jumlah', 'amount', 'nilai_investasi'];
                     foreach ($possible_columns as $col) {
                         try {
                             $test_sql = "SELECT {$col} FROM investasi WHERE id = ? LIMIT 1";
@@ -131,13 +115,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         }
                     }
                     
-                    $sql_invest = "SELECT {$amount_column} as jumlah_investasi FROM investasi WHERE id = ?";
+                    $sql_invest = "SELECT {$amount_column} as jumlah FROM investasi WHERE id = ?";
                     $stmt_invest = $koneksi->prepare($sql_invest);
                     $stmt_invest->execute([$investasi_id]);
                     $invest_data = $stmt_invest->fetch();
                     
                     if ($invest_data && $invest_data['jumlah_investasi'] > 0) {
-                        $persentase_keuntungan = round(($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100, 6);
+                        $persentase_keuntungan = round(($jumlah_keuntungan / $invest_data['jumlah']) * 100, 6);
                     }
                 } catch (Exception $e) {
                     // Jika gagal mendapatkan data investasi, set persentase ke null
