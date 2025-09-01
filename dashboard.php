@@ -41,7 +41,7 @@ $sql_kategori = "
     SELECT 
         k.id as kategori_id,
         k.nama_kategori, 
-        COUNT(DISTINCT i.id) as jumlah_investasi, 
+        COUNT(DISTINCT i.id) as jumlah, 
         COALESCE(SUM(i.jumlah), 0) as total_investasi,
         COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
         (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah_keuntungan), 0)) as total_nilai
@@ -49,7 +49,7 @@ $sql_kategori = "
     LEFT JOIN investasi i ON k.id = i.kategori_id
     LEFT JOIN keuntungan_investasi ki ON i.id = ki.investasi_id
     GROUP BY k.id, k.nama_kategori
-    HAVING jumlah_investasi > 0
+    HAVING jumlah > 0
     ORDER BY total_nilai DESC
 ";
 $stmt_kategori = $koneksi->query($sql_kategori);
