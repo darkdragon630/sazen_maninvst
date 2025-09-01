@@ -21,28 +21,73 @@ $sql = "
 $stmt = $koneksi->query($sql);
 $investasi = $stmt->fetchAll();
 
-// Query untuk statistik
+// Query untuk statistik dengan keuntungan
 $sql_stats = "
     SELECT 
-        COUNT(*) as total_investasi,
-        COALESCE(SUM(jumlah), 0) as total_nilai,
-        COUNT(DISTINCT kategori_id) as total_kategori
-    FROM investasi
+        COUNT(DISTINCT i.id) as total_investasi,
+        COALESCE(SUM(i.jumlah), 0) as total_investasi_nilai,
+        COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
+        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah_keuntungan), 0)) as total_nilai,
+        COUNT(DISTINCT i.kategori_id) as total_kategori,
+        COUNT(DISTINCT ki.id) as total_keuntungan_records
+    FROM investasi i
+    LEFT JOIN keuntungan_investasi ki ON i.id = ki.investasi_id
 ";
 $stmt_stats = $koneksi->query($sql_stats);
 $stats = $stmt_stats->fetch();
 
-// Query untuk investasi per kategori
+// Query untuk investasi per kategori dengan keuntungan
 $sql_kategori = "
-    SELECT k.nama_kategori, COUNT(i.id) as jumlah, COALESCE(SUM(i.jumlah), 0) as total
+    SELECT 
+        k.id as kategori_id,
+        k.nama_kategori, 
+        COUNT(DISTINCT i.id) as jumlah_investasi, 
+        COALESCE(SUM(i.jumlah), 0) as total_investasi,
+        COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
+        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah_keuntungan), 0)) as total_nilai
     FROM kategori k
     LEFT JOIN investasi i ON k.id = i.kategori_id
+    LEFT JOIN keuntungan_investasi ki ON i.id = ki.investasi_id
     GROUP BY k.id, k.nama_kategori
-    HAVING jumlah > 0
-    ORDER BY total DESC
+    HAVING jumlah_investasi > 0
+    ORDER BY total_nilai DESC
 ";
 $stmt_kategori = $koneksi->query($sql_kategori);
 $kategori_stats = $stmt_kategori->fetchAll();
+
+// Query untuk keuntungan terbaru
+$sql_keuntungan = "
+    SELECT 
+        ki.id,
+        ki.judul_keuntungan,
+        ki.jumlah_keuntungan,
+        ki.persentase_keuntungan,
+        ki.tanggal_keuntungan,
+        ki.sumber_keuntungan,
+        ki.status,
+        i.judul_investasi,
+        kat.nama_kategori
+    FROM keuntungan_investasi ki
+    JOIN investasi i ON ki.investasi_id = i.id
+    JOIN kategori kat ON ki.kategori_id = kat.id
+    ORDER BY ki.tanggal_keuntungan DESC
+    LIMIT 6
+";
+$stmt_keuntungan = $koneksi->query($sql_keuntungan);
+$keuntungan_list = $stmt_keuntungan->fetchAll();
+
+// Query untuk statistik keuntungan per sumber
+$sql_sumber = "
+    SELECT 
+        sumber_keuntungan,
+        COUNT(*) as jumlah,
+        SUM(jumlah_keuntungan) as total
+    FROM keuntungan_investasi
+    GROUP BY sumber_keuntungan
+    ORDER BY total DESC
+";
+$stmt_sumber = $koneksi->query($sql_sumber);
+$sumber_stats = $stmt_sumber->fetchAll();
 
 // Proses logout
 if (isset($_POST['logout'])) {
@@ -92,7 +137,7 @@ if (isset($_POST['logout'])) {
             </div>
             <div class="toast-content">
                 <div class="toast-title">Berhasil!</div>
-                <div class="toast-message">Data berhasil disimpan</div>
+                <div class="toast-message"><?= isset($_GET['msg']) ? htmlspecialchars($_GET['msg']) : 'Data berhasil disimpan' ?></div>
             </div>
             <button class="toast-close" onclick="closeToast()">
                 <i class="fas fa-times"></i>
@@ -158,7 +203,7 @@ if (isset($_POST['logout'])) {
                     <i class="fas fa-chart-bar"></i>
                     Ringkasan Portofolio
                 </h2>
-                <p class="section-subtitle">Gambaran umum investasi Anda saat ini</p>
+                <p class="section-subtitle">Gambaran umum investasi dan keuntungan Anda</p>
             </div>
             
             <div class="stats-grid">
@@ -190,29 +235,29 @@ if (isset($_POST['logout'])) {
                     <div class="stat-content">
                         <div class="stat-label">Total Nilai</div>
                         <div class="stat-number" data-amount="<?= $stats['total_nilai'] ?>">Rp <?= number_format($stats['total_nilai'], 0, ',', '.') ?></div>
-                        <div class="stat-sublabel">Asset Under Management</div>
+                        <div class="stat-sublabel">Investasi + Keuntungan</div>
                     </div>
                     <div class="stat-trend positive">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+8.5%</span>
+                        <span>+<?= $stats['total_investasi_nilai'] > 0 ? number_format(($stats['total_keuntungan']/$stats['total_investasi_nilai'])*100, 1) : 0 ?>%</span>
                     </div>
                 </div>
 
                 <div class="stat-card card-info" data-aos="fade-up" data-aos-delay="300">
                     <div class="stat-icon-container">
                         <div class="stat-icon">
-                            <i class="fas fa-layer-group"></i>
+                            <i class="fas fa-chart-line-up"></i>
                         </div>
                         <div class="stat-glow"></div>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-label">Kategori</div>
-                        <div class="stat-number" data-count="<?= $stats['total_kategori'] ?>"><?= $stats['total_kategori'] ?></div>
-                        <div class="stat-sublabel">Diversifikasi</div>
+                        <div class="stat-label">Total Keuntungan</div>
+                        <div class="stat-number">Rp <?= number_format($stats['total_keuntungan'], 0, ',', '.') ?></div>
+                        <div class="stat-sublabel"><?= $stats['total_keuntungan_records'] ?> Transaksi</div>
                     </div>
                     <div class="stat-trend positive">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+5%</span>
+                        <span>+8.5%</span>
                     </div>
                 </div>
 
@@ -224,23 +269,52 @@ if (isset($_POST['logout'])) {
                         <div class="stat-glow"></div>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-label">Rata-rata</div>
+                        <div class="stat-label">ROI Rata-rata</div>
                         <div class="stat-number">
-                            <?php if ($stats['total_investasi'] > 0): ?>
-                                Rp <?= number_format($stats['total_nilai'] / $stats['total_investasi'], 0, ',', '.') ?>
+                            <?php if ($stats['total_investasi_nilai'] > 0): ?>
+                                <?= number_format(($stats['total_keuntungan']/$stats['total_investasi_nilai'])*100, 1) ?>%
                             <?php else: ?>
-                                Rp 0
+                                0%
                             <?php endif; ?>
                         </div>
-                        <div class="stat-sublabel">Per Investasi</div>
+                        <div class="stat-sublabel">Return on Investment</div>
                     </div>
-                    <div class="stat-trend neutral">
-                        <i class="fas fa-minus"></i>
-                        <span>0%</span>
+                    <div class="stat-trend positive">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Profit</span>
                     </div>
                 </div>
             </div>
         </section>
+
+        <!-- Profit Summary -->
+        <?php if ($sumber_stats): ?>
+            <section class="profit-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-money-bill-trend-up"></i>
+                        Analisis Keuntungan
+                    </h2>
+                    <p class="section-subtitle">Breakdown keuntungan berdasarkan sumber</p>
+                </div>
+                
+                <div class="profit-summary">
+                    <?php foreach ($sumber_stats as $sumber): ?>
+                        <div class="profit-item" data-aos="zoom-in" data-aos-delay="100">
+                            <h4>
+                                <i class="fas <?= $sumber['sumber_keuntungan'] == 'dividen' ? 'fa-coins' : 
+                                                ($sumber['sumber_keuntungan'] == 'capital_gain' ? 'fa-chart-line' : 
+                                                ($sumber['sumber_keuntungan'] == 'bunga' ? 'fa-percent' : 
+                                                ($sumber['sumber_keuntungan'] == 'bonus' ? 'fa-gift' : 'fa-ellipsis-h'))) ?>"></i>
+                                <?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?>
+                            </h4>
+                            <div class="amount">Rp <?= number_format($sumber['total'], 0, ',', '.') ?></div>
+                            <small><?= $sumber['jumlah'] ?> transaksi</small>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
 
         <!-- Category Overview -->
         <?php if ($kategori_stats): ?>
@@ -250,7 +324,7 @@ if (isset($_POST['logout'])) {
                         <i class="fas fa-chart-pie"></i>
                         Analisis Kategori
                     </h2>
-                    <p class="section-subtitle">Distribusi investasi berdasarkan kategori</p>
+                    <p class="section-subtitle">Distribusi investasi dan keuntungan berdasarkan kategori</p>
                 </div>
                 
                 <div class="category-grid">
@@ -264,18 +338,95 @@ if (isset($_POST['logout'])) {
                                     <h3 class="category-name"><?= htmlspecialchars($kat['nama_kategori']) ?></h3>
                                     <div class="category-count">
                                         <i class="fas fa-cube"></i>
-                                        <?= $kat['jumlah'] ?> item
+                                        <?= $kat['jumlah_investasi'] ?> investasi
                                     </div>
                                 </div>
                             </div>
                             <div class="category-value">
-                                <div class="value-amount">Rp <?= number_format($kat['total'], 0, ',', '.') ?></div>
-                                <div class="value-percentage"><?= $stats['total_nilai'] > 0 ? number_format(($kat['total'] / $stats['total_nilai'] * 100), 1) : 0 ?>%</div>
+                                <div class="value-amount">Rp <?= number_format($kat['total_nilai'], 0, ',', '.') ?></div>
+                                <div class="value-breakdown">
+                                    <small>
+                                        Investasi: Rp <?= number_format($kat['total_investasi'], 0, ',', '.') ?><br>
+                                        Keuntungan: Rp <?= number_format($kat['total_keuntungan'], 0, ',', '.') ?>
+                                    </small>
+                                </div>
+                                <div class="value-percentage"><?= $stats['total_nilai'] > 0 ? number_format(($kat['total_nilai'] / $stats['total_nilai'] * 100), 1) : 0 ?>%</div>
                             </div>
                             <div class="progress-container">
                                 <div class="progress-bar">
-                                    <div class="progress-fill" data-width="<?= $stats['total_nilai'] > 0 ? ($kat['total'] / $stats['total_nilai'] * 100) : 0 ?>"></div>
+                                    <div class="progress-fill" data-width="<?= $stats['total_nilai'] > 0 ? ($kat['total_nilai'] / $stats['total_nilai'] * 100) : 0 ?>"></div>
                                 </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endif; ?>
+
+        <!-- Recent Profits -->
+        <?php if ($keuntungan_list): ?>
+            <section class="recent-profits-section">
+                <div class="section-header">
+                    <div class="header-content">
+                        <h2 class="section-title">
+                            <i class="fas fa-chart-line-up"></i>
+                            Keuntungan Terbaru
+                        </h2>
+                        <p class="section-subtitle">Catatan keuntungan investasi terkini</p>
+                    </div>
+                    <div class="header-actions">
+                        <a href="admin/upload_keuntungan.php" class="add-btn">
+                            <i class="fas fa-plus"></i>
+                            <span>Tambah Keuntungan</span>
+                        </a>
+                    </div>
+                </div>
+
+                <div class="profit-list">
+                    <?php foreach ($keuntungan_list as $profit): ?>
+                        <div class="keuntungan-card" data-aos="fade-up" data-aos-delay="100">
+                            <div class="keuntungan-header">
+                                <div>
+                                    <h4 class="keuntungan-title"><?= htmlspecialchars($profit['judul_keuntungan']) ?></h4>
+                                    <p class="keuntungan-investment">
+                                        <i class="fas fa-briefcase"></i>
+                                        <?= htmlspecialchars($profit['judul_investasi']) ?>
+                                        <span class="sumber-badge sumber-<?= $profit['sumber_keuntungan'] ?>">
+                                            <?= ucfirst($profit['sumber_keuntungan']) ?>
+                                        </span>
+                                    </p>
+                                </div>
+                                <div class="card-menu">
+                                    <button class="menu-toggle">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <div class="menu-dropdown">
+                                        <a href="admin/edit_keuntungan.php?id=<?= $profit['id'] ?>" class="menu-item">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <a href="admin/delete_keuntungan.php?id=<?= $profit['id'] ?>" class="menu-item delete" onclick="return confirm('Apakah Anda yakin ingin menghapus keuntungan ini?');">
+                                            <i class="fas fa-trash"></i> Hapus
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="keuntungan-amount">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Rp <?= number_format($profit['jumlah_keuntungan'], 0, ',', '.') ?>
+                                <?php if ($profit['persentase_keuntungan']): ?>
+                                    <small>(<?= $profit['persentase_keuntungan'] ?>%)</small>
+                                <?php endif; ?>
+                            </div>
+                            
+                            <div class="keuntungan-details">
+                                <div>
+                                    <i class="fas fa-calendar"></i>
+                                    <?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?>
+                                </div>
+                                <span class="status-badge status-<?= $profit['status'] ?>">
+                                    <?= $profit['status'] == 'realized' ? 'Direalisasi' : 'Belum Direalisasi' ?>
+                                </span>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -425,7 +576,9 @@ if (isset($_POST['logout'])) {
                 <div class="analytics-card" data-aos="slide-up" data-aos-delay="100">
                     <div class="analytics-header">
                         <h4>Performance YTD</h4>
-                        <div class="analytics-value positive">+18.5%</div>
+                        <div class="analytics-value positive">
+                            +<?= $stats['total_investasi_nilai'] > 0 ? number_format(($stats['total_keuntungan']/$stats['total_investasi_nilai'])*100, 1) : 0 ?>%
+                        </div>
                     </div>
                     <div class="mini-chart">
                         <div class="chart-bar" style="height: 60%"></div>
@@ -449,13 +602,15 @@ if (isset($_POST['logout'])) {
 
                 <div class="analytics-card" data-aos="slide-up" data-aos-delay="300">
                     <div class="analytics-header">
-                        <h4>Next Maturity</h4>
-                        <div class="analytics-value info">3 bulan</div>
+                        <h4>Profit Ratio</h4>
+                        <div class="analytics-value info">
+                            <?= $stats['total_nilai'] > 0 ? number_format(($stats['total_keuntungan']/$stats['total_nilai'])*100, 1) : 0 ?>%
+                        </div>
                     </div>
                     <div class="countdown">
                         <div class="countdown-item">
-                            <span class="countdown-number">90</span>
-                            <span class="countdown-label">Hari</span>
+                            <span class="countdown-number"><?= $stats['total_keuntungan_records'] ?></span>
+                            <span class="countdown-label">Transaksi</span>
                         </div>
                     </div>
                 </div>
@@ -469,7 +624,7 @@ if (isset($_POST['logout'])) {
             <div class="footer-left">
                 <div class="footer-logo">
                     <i class="fas fa-chart-line"></i>
-                    <span>SAZEN Investment Manager version 1</span>
+                    <span>SAZEN Investment Manager version 2.0</span>
                 </div>
                 <p class="footer-text">&copy; <?= date("Y") ?> SAZEN. All rights reserved.</p>
             </div>
@@ -479,16 +634,26 @@ if (isset($_POST['logout'])) {
                     Portfolio Public
                 </a>
                 <a href="admin/upload.php" class="footer-link">
-                    <i class="fas fa-cog"></i>
-                    Kelola Data
+                    <i class="fas fa-plus"></i>
+                    Tambah Investasi
                 </a>
-                <a href="#" class="footer-link">
-                    <i class="fas fa-chart-bar"></i>
-                    Analytics
+                <a href="admin/upload_keuntungan.php" class="footer-link">
+                    <i class="fas fa-chart-line-up"></i>
+                    Tambah Keuntungan
                 </a>
             </div>
         </div>
     </footer>
+
+    <!-- Quick Actions FAB -->
+    <div class="quick-actions">
+        <a href="admin/upload_keuntungan.php" class="fab fab-success" title="Tambah Keuntungan">
+            <i class="fas fa-chart-line-up"></i>
+        </a>
+        <a href="admin/upload.php" class="fab fab-primary" title="Tambah Investasi">
+            <i class="fas fa-plus"></i>
+        </a>
+    </div>
 
     <!-- Scroll to Top Button -->
     <button class="scroll-to-top" id="scrollToTop">
@@ -551,6 +716,14 @@ if (isset($_POST['logout'])) {
             toggle.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const dropdown = this.nextElementSibling;
+                
+                // Close all other dropdowns
+                document.querySelectorAll('.menu-dropdown').forEach(d => {
+                    if (d !== dropdown) {
+                        d.classList.remove('show');
+                    }
+                });
+                
                 dropdown.classList.toggle('show');
             });
         });
