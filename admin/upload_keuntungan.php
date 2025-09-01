@@ -137,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $invest_data = $stmt_invest->fetch();
                     
                     if ($invest_data && $invest_data['jumlah_investasi'] > 0) {
-                        $persentase_keuntungan = ($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100;
+                        $persentase_keuntungan = round(($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100, 6);
                     }
                 } catch (Exception $e) {
                     // Jika gagal mendapatkan data investasi, set persentase ke null
@@ -677,13 +677,21 @@ if (isset($_SESSION['success'])) {
             let numericValue = parseInputValue(value);
             
             if (numericValue > 0) {
-                // Format untuk tampilan (gunakan format Indonesia)
+                // Jangan format ulang - biarkan user input apa adanya untuk presisi
+                // Hanya pastikan formatnya konsisten
                 if (numericValue < 1) {
-                    // Untuk nilai < 1, tampilkan sebagai desimal sederhana
-                    this.value = numericValue.toFixed(2).replace('.', ',');
+                    // Untuk nilai < 1, pertahankan format desimal user
+                    if (value.includes(',')) {
+                        // User pakai koma, pertahankan format Indonesia
+                        this.value = numericValue.toString().replace('.', ',');
+                    } else {
+                        // User pakai titik, pertahankan format international
+                        this.value = numericValue.toString();
+                    }
                 } else {
-                    // Untuk nilai >= 1, gunakan format ribuan Indonesia
-                    this.value = formatIndonesianCurrency(numericValue);
+                    // Untuk nilai >= 1, biarkan user menentukan formatnya sendiri
+                    // Hanya pastikan nilai numeriknya benar
+                    this.value = value; // Pertahankan format asli user
                 }
             }
         });
@@ -786,12 +794,18 @@ if (isset($_SESSION['success'])) {
 
         // Form validation before submit
         document.getElementById('profitForm').addEventListener('submit', function(e) {
-            const profitAmount = document.getElementById('jumlah_keuntungan').value;
-            if (!profitAmount || profitAmount === '0') {
+            const profitInput = document.getElementById('jumlah_keuntungan');
+            const profitValue = parseInputValue(profitInput.value.trim() || '0');
+            
+            if (!profitInput.value.trim() || profitValue <= 0) {
                 e.preventDefault();
                 alert('Jumlah keuntungan harus diisi dan lebih dari 0');
+                profitInput.focus();
                 return false;
             }
+            
+            // Pastikan nilai yang dikirim sudah dalam format yang benar
+            profitInput.value = profitValue.toString();
         });
     </script>
 </body>
