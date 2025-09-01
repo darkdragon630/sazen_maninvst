@@ -1,22 +1,26 @@
 <?php 
+// Start output buffering untuk mencegah header errors
+ob_start();
+
+// Set secure session cookie parameters SEBELUM session_start()
+ini_set('session.cookie_httponly', 1);
+ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
+ini_set('session.cookie_samesite', 'Strict');
+
 session_start();
 require_once "../config.php"; // file koneksi
 
 // Regenerate session ID untuk keamanan
 session_regenerate_id(true);
 
-// Set secure session cookie parameters
-if (!headers_sent()) {
-    ini_set('session.cookie_httponly', 1);
-    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']) ? 1 : 0);
-    ini_set('session.cookie_samesite', 'Strict');
-    
-    // Security headers
-    header('X-Frame-Options: DENY');
-    header('X-Content-Type-Options: nosniff');
-    header('X-XSS-Protection: 1; mode=block');
-    header('Referrer-Policy: strict-origin-when-cross-origin');
-}
+// Security headers
+header('X-Frame-Options: DENY');
+header('X-Content-Type-Options: nosniff');
+header('X-XSS-Protection: 1; mode=block');
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('Cache-Control: no-cache, no-store, must-revalidate');
+header('Pragma: no-cache');
+header('Expires: 0');
 
 // Kalau sudah login langsung ke dashboard
 if (isset($_SESSION['user_id'])) {
