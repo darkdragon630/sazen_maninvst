@@ -2,6 +2,7 @@
 session_start();
 require_once "../config.php";
 
+// Regenerate session ID untuk keamanan
 session_regenerate_id(true);
 
 // Redirect jika sudah login
@@ -10,7 +11,9 @@ if (isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Generate dan regenerate CSRF token
+/* =========================
+   CSRF TOKEN GENERATION & VALIDATION
+========================= */
 function generate_csrf_token() {
     return bin2hex(random_bytes(32));
 }
@@ -19,37 +22,38 @@ function validate_csrf_token($token) {
     return isset($_SESSION['csrf_token']) && hash_equals($_SESSION['csrf_token'], $token);
 }
 
-// Generate CSRF token jika belum ada
+// Buat CSRF token jika belum ada
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = generate_csrf_token();
 }
 
-// Variabel pesan
+/* =========================
+   PESAN ERROR / SUCCESS
+========================= */
 $error = "";
 $success = "";
 
-// Pesan sukses dari register
 if (isset($_SESSION['reg_success'])) {
     $success = $_SESSION['reg_success'];
     unset($_SESSION['reg_success']);
 }
 
-// Auto clear messages after display
 if (isset($_SESSION['temp_error'])) {
     $error = $_SESSION['temp_error'];
     unset($_SESSION['temp_error']);
 }
 
-// Fungsi validasi input
+/* =========================
+   FUNGSIONAL VALIDASI
+========================= */
 function validate_username($username) {
     return preg_match('/^[a-zA-Z0-9_]{3,20}$/', $username);
 }
 
 function validate_password($password) {
-    // Minimal 8 karakter, harus ada huruf besar, kecil, dan angka
-    return strlen($password) >= 8 && 
-           preg_match('/[a-z]/', $password) && 
-           preg_match('/[A-Z]/', $password) && 
+    return strlen($password) >= 8 &&
+           preg_match('/[a-z]/', $password) &&
+           preg_match('/[A-Z]/', $password) &&
            preg_match('/[0-9]/', $password);
 }
 
@@ -57,26 +61,23 @@ function sanitize_input($input) {
     return htmlspecialchars(trim($input), ENT_QUOTES, 'UTF-8');
 }
 
-// Logging function untuk monitoring
 function log_security_event($event, $details = '') {
     $log_entry = date('Y-m-d H:i:s') . " | " . $_SERVER['REMOTE_ADDR'] . " | $event | $details" . PHP_EOL;
     error_log($log_entry, 3, "../logs/security.log");
 }
 
 /* =========================
-   PROSES LOGIN DENGAN ENHANCED SECURITY
+   PROSES LOGIN
 ========================= */
 if (isset($_POST['login'])) {
     try {
-        // Validasi CSRF dengan timing attack protection
         if (!isset($_POST['csrf_token']) || !validate_csrf_token($_POST['csrf_token'])) {
             $error = "❌ Token CSRF tidak valid.";
             log_security_event("CSRF_INVALID", "Login attempt");
             $_SESSION['csrf_token'] = generate_csrf_token();
         } else {
-            // Refresh CSRF token setelah validasi sukses
             $_SESSION['csrf_token'] = generate_csrf_token();
-            
+
             $username = sanitize_input($_POST['username']);
             $password = $_POST['password'];
 
@@ -85,25 +86,20 @@ if (isset($_POST['login'])) {
             } elseif (!validate_username($username)) {
                 $error = "❌ Username hanya boleh huruf, angka, dan underscore (3-20 karakter).";
             } else {
-                $sql = "SELECT * FROM users WHERE username = ? LIMIT 1";
-                $stmt = $koneksi->prepare($sql);
+                $stmt = $koneksi->prepare("SELECT * FROM users WHERE username = ? LIMIT 1");
                 $stmt->execute([$username]);
                 $user = $stmt->fetch();
 
                 if ($user) {
                     $current_time = new DateTime();
 
-                    // Cek akun sedang dikunci
                     if ($user['locked_until'] && $current_time < new DateTime($user['locked_until'])) {
-                        $error = "❌ Akun terkunci sampai " . date('H:i:s d-m-Y', strtotime($user['locked_until'])) . ". Coba lagi nanti.";
+                        $error = "❌ Akun terkunci sampai " . date('H:i:s d-m-Y', strtotime($user['locked_until'])) . ".";
                         log_security_event("LOGIN_LOCKED", "User: $username");
                     } elseif (password_verify($password, $user['password'])) {
-                        // Reset failed attempts jika login sukses
-                        $sql = "UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = ?";
-                        $stmt = $koneksi->prepare($sql);
+                        $stmt = $koneksi->prepare("UPDATE users SET failed_attempts = 0, locked_until = NULL, last_login = NOW() WHERE id = ?");
                         $stmt->execute([$user['id']]);
 
-                        // Simpan session dengan regenerasi ID
                         session_regenerate_id(true);
                         $_SESSION['user_id'] = $user['id'];
                         $_SESSION['username'] = $user['username'];
@@ -114,7 +110,6 @@ if (isset($_POST['login'])) {
                         header("Location: ../dashboard.php");
                         exit;
                     } else {
-                        // Increment failed attempts
                         $failed_attempts = $user['failed_attempts'] + 1;
                         $locked_until = null;
                         $max_attempts = 5;
@@ -130,8 +125,7 @@ if (isset($_POST['login'])) {
                             log_security_event("LOGIN_FAILED", "User: $username, Attempts: $failed_attempts");
                         }
 
-                        $sql = "UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?";
-                        $stmt = $koneksi->prepare($sql);
+                        $stmt = $koneksi->prepare("UPDATE users SET failed_attempts = ?, locked_until = ? WHERE id = ?");
                         $stmt->execute([$failed_attempts, $locked_until, $user['id']]);
                     }
                 } else {
@@ -141,25 +135,23 @@ if (isset($_POST['login'])) {
             }
         }
     } catch (Exception $e) {
-        $error = "❌ Terjadi kesalahan sistem. Silakan coba lagi.";
+        $error = "❌ Terjadi kesalahan sistem.";
         log_security_event("LOGIN_ERROR", $e->getMessage());
     }
 }
 
 /* =========================
-   PROSES REGISTER DENGAN ENHANCED VALIDATION
+   PROSES REGISTER
 ========================= */
 if (isset($_POST['register'])) {
     try {
-        // Validasi CSRF
         if (!isset($_POST['csrf_token']) || !validate_csrf_token($_POST['csrf_token'])) {
             $error = "❌ Token CSRF tidak valid.";
             log_security_event("CSRF_INVALID", "Register attempt");
             $_SESSION['csrf_token'] = generate_csrf_token();
         } else {
-            // Refresh CSRF token
             $_SESSION['csrf_token'] = generate_csrf_token();
-            
+
             $username = sanitize_input($_POST['reg_username']);
             $email = sanitize_input($_POST['reg_email']);
             $password = $_POST['reg_password'];
@@ -176,39 +168,24 @@ if (isset($_POST['register'])) {
             } elseif ($password !== $confirm_password) {
                 $error = "❌ Password dan konfirmasi tidak sama.";
             } else {
-                // Cek username/email sudah ada
-                $sql = "SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1";
-                $stmt = $koneksi->prepare($sql);
+                $stmt = $koneksi->prepare("SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1");
                 $stmt->execute([$username, $email]);
                 $existing_user = $stmt->fetch();
 
                 if ($existing_user) {
-                    if ($existing_user['username'] === $username) {
-                        $error = "❌ Username sudah digunakan.";
-                    } else {
-                        $error = "❌ Email sudah terdaftar.";
-                    }
+                    $error = ($existing_user['username'] === $username) ? "❌ Username sudah digunakan." : "❌ Email sudah terdaftar.";
                     log_security_event("REGISTER_DUPLICATE", "Username: $username, Email: $email");
                 } else {
-                    // Hash password dengan ARGON2ID
-                    $options = [
-                        'memory_cost' => 65536, // 64 MB
-                        'time_cost' => 4,       // 4 iterations
-                        'threads' => 3,         // 3 threads
-                    ];
-                    
-                    $hashed_password = password_hash($password, PASSWORD_ARGON2ID, $options);
+                    $hashed_password = password_hash($password, PASSWORD_ARGON2ID, [
+                        'memory_cost' => 65536,
+                        'time_cost' => 4,
+                        'threads' => 3,
+                    ]);
 
-                    $sql = "INSERT INTO users (username, email, password, created_at, failed_attempts, locked_until) VALUES (?, ?, ?, NOW(), 0, NULL)";
-                    $stmt = $koneksi->prepare($sql);
-
+                    $stmt = $koneksi->prepare("INSERT INTO users (username, email, password, created_at, failed_attempts, locked_until) VALUES (?, ?, ?, NOW(), 0, NULL)");
                     if ($stmt->execute([$username, $email, $hashed_password])) {
                         $_SESSION['reg_success'] = "✅ Akun berhasil dibuat! Silakan login.";
                         log_security_event("REGISTER_SUCCESS", "User: $username");
-                        
-                        // Clear sensitive data
-                        unset($password, $confirm_password, $hashed_password);
-                        
                         header("Location: auth.php");
                         exit;
                     } else {
@@ -219,7 +196,7 @@ if (isset($_POST['register'])) {
             }
         }
     } catch (Exception $e) {
-        $error = "❌ Terjadi kesalahan sistem. Silakan coba lagi.";
+        $error = "❌ Terjadi kesalahan sistem.";
         log_security_event("REGISTER_ERROR", $e->getMessage());
     }
 }
