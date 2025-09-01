@@ -338,7 +338,7 @@ if (isset($_POST['logout'])) {
                                     <h3 class="category-name"><?= htmlspecialchars($kat['nama_kategori']) ?></h3>
                                     <div class="category-count">
                                         <i class="fas fa-cube"></i>
-                                        <?= $kat['jumlah_investasi'] ?> investasi
+                                        <?= $kat['jumlah'] ?> investasi
                                     </div>
                                 </div>
                             </div>
