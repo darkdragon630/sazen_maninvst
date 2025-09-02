@@ -168,37 +168,105 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
     <!-- Main Content -->
     <main class="main-content">
 
-        <!-- Quick Analytics Section -->
-        <section class="quick-stats">
-            <div class="stats-container">
-                <div class="quick-stat-item">
-                    <i class="fas fa-trending-up stat-icon"></i>
-                    <div class="stat-info">
-                        <div class="stat-number"><?= number_format($performance_ytd, 2) ?>%</div>
-                        <div class="stat-desc">Performance YTD</div>
-                    </div>
-                </div>
+        <!-- Layout Grid: Quick Stats + Breakdown + Catatan -->
+        <div class="dashboard-grid">
 
-                <div class="quick-stat-item">
-                    <i class="fas fa-percent stat-icon"></i>
-                    <div class="stat-info">
-                        <div class="stat-number"><?= number_format($profit_ratio, 2) ?>%</div>
-                        <div class="stat-desc">Profit Ratio</div>
+            <!-- Quick Analytics Section -->
+            <section class="quick-stats" style="margin-bottom: 2rem;">
+                <h2 class="section-title">
+                    <i class="fas fa-analytics"></i>
+                    Ringkasan Kinerja
+                </h2>
+                <div class="stats-container">
+                    <div class="quick-stat-item">
+                        <i class="fas fa-trending-up stat-icon"></i>
+                        <div class="stat-info">
+                            <div class="stat-number"><?= number_format($performance_ytd, 2) ?>%</div>
+                            <div class="stat-desc">Performance YTD</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="quick-stat-item">
-                    <i class="fas fa-file-invoice-dollar stat-icon"></i>
-                    <div class="stat-info">
-                        <div class="stat-number"><?= $stats['total_keuntungan_records'] ?></div>
-                        <div class="stat-desc">Transaksi Keuntungan</div>
+                    <div class="quick-stat-item">
+                        <i class="fas fa-percent stat-icon"></i>
+                        <div class="stat-info">
+                            <div class="stat-number"><?= number_format($profit_ratio, 2) ?>%</div>
+                            <div class="stat-desc">Profit Ratio</div>
+                        </div>
+                    </div>
+
+                    <div class="quick-stat-item">
+                        <i class="fas fa-file-invoice-dollar stat-icon"></i>
+                        <div class="stat-info">
+                            <div class="stat-number"><?= $stats['total_keuntungan_records'] ?></div>
+                            <div class="stat-desc">Transaksi Keuntungan</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+
+            <!-- Breakdown Keuntungan -->
+            <?php if ($sumber_stats): ?>
+                <section class="profit-breakdown" style="margin-bottom: 2rem;">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-pie"></i>
+                        Breakdown Keuntungan
+                    </h2>
+                    <div class="breakdown-grid">
+                        <?php foreach ($sumber_stats as $sumber): ?>
+                            <div class="breakdown-item">
+                                <div class="breakdown-header">
+                                    <span class="source-icon">
+                                        <i class="fas <?= [
+                                            'dividen' => 'fa-coins',
+                                            'capital_gain' => 'fa-chart-line',
+                                            'bunga' => 'fa-percent',
+                                            'bonus' => 'fa-gift'
+                                        ][$sumber['sumber_keuntungan']] ?? 'fa-ellipsis-h' ?>"></i>
+                                    </span>
+                                    <span class="source-name"><?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?></span>
+                                </div>
+                                <div class="breakdown-value">
+                                    Rp <?= number_format((float)$sumber['total'], 2, ',', '.') ?>
+                                </div>
+                                <div class="breakdown-count">
+                                    <?= $sumber['jumlah'] ?> transaksi
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+
+            <!-- Catatan Keuntungan Terbaru -->
+            <?php if ($keuntungan_list): ?>
+                <section class="recent-profits" style="margin-bottom: 2rem;">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-line-up"></i>
+                        Keuntungan Terbaru
+                    </h2>
+                    <div class="profits-list">
+                        <?php foreach ($keuntungan_list as $profit): ?>
+                            <div class="profit-item">
+                                <div class="profit-main">
+                                    <h3><?= htmlspecialchars($profit['judul_keuntungan']) ?></h3>
+                                    <p><?= htmlspecialchars($profit['judul_investasi']) ?> • <?= htmlspecialchars($profit['nama_kategori']) ?></p>
+                                </div>
+                                <div class="profit-amount">
+                                    +Rp <?= number_format((float)$profit['jumlah_keuntungan'], 2, ',', '.') ?>
+                                </div>
+                                <div class="profit-meta">
+                                    <span><?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?></span>
+                                    <span class="source-badge"><?= ucfirst(str_replace('_', ' ', $profit['sumber_keuntungan'])) ?></span>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </section>
+            <?php endif; ?>
+        </div>
 
         <!-- Filter & Sort Section -->
-        <section class="portfolio-controls">
+        <section class="portfolio-controls" style="margin-top: 2rem;">
             <div class="controls-header">
                 <h2 class="controls-title">
                     <i class="fas fa-filter"></i>
@@ -244,8 +312,9 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
             </div>
         </section>
 
+        <!-- Investment Grid -->
         <?php if ($investasi): ?>
-            <section class="investments-grid" id="investmentsGrid">
+            <section class="investments-grid" id="investmentsGrid" style="margin-top: 2rem;">
                 <?php foreach ($investasi as $index => $item): ?>
                     <div class="investment-card" 
                          data-category="<?= htmlspecialchars($item['nama_kategori']) ?>"
@@ -345,7 +414,7 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                 <?php endforeach; ?>
             </section>
         <?php else: ?>
-            <div class="empty-state">
+            <div class="empty-state" style="margin-top: 3rem;">
                 <div class="empty-animation">
                     <div class="empty-icon">
                         <i class="fas fa-chart-line-up"></i>
@@ -359,66 +428,6 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                     Tambah Investasi
                 </button>
             </div>
-        <?php endif; ?>
-
-        <!-- Breakdown Keuntungan -->
-        <?php if ($sumber_stats): ?>
-            <section class="profit-breakdown">
-                <h2 class="section-title">
-                    <i class="fas fa-chart-pie"></i>
-                    Breakdown Keuntungan
-                </h2>
-                <div class="breakdown-grid">
-                    <?php foreach ($sumber_stats as $sumber): ?>
-                        <div class="breakdown-item">
-                            <div class="breakdown-header">
-                                <span class="source-icon">
-                                    <i class="fas <?= [
-                                        'dividen' => 'fa-coins',
-                                        'capital_gain' => 'fa-chart-line',
-                                        'bunga' => 'fa-percent',
-                                        'bonus' => 'fa-gift'
-                                    ][$sumber['sumber_keuntungan']] ?? 'fa-ellipsis-h' ?>"></i>
-                                </span>
-                                <span class="source-name"><?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?></span>
-                            </div>
-                            <div class="breakdown-value">
-                                Rp <?= number_format((float)$sumber['total'], 2, ',', '.') ?>
-                            </div>
-                            <div class="breakdown-count">
-                                <?= $sumber['jumlah'] ?> transaksi
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
-        <?php endif; ?>
-
-        <!-- Catatan Keuntungan Terbaru -->
-        <?php if ($keuntungan_list): ?>
-            <section class="recent-profits">
-                <h2 class="section-title">
-                    <i class="fas fa-chart-line-up"></i>
-                    Keuntungan Terbaru
-                </h2>
-                <div class="profits-list">
-                    <?php foreach ($keuntungan_list as $profit): ?>
-                        <div class="profit-item">
-                            <div class="profit-main">
-                                <h3><?= htmlspecialchars($profit['judul_keuntungan']) ?></h3>
-                                <p><?= htmlspecialchars($profit['judul_investasi']) ?> • <?= htmlspecialchars($profit['nama_kategori']) ?></p>
-                            </div>
-                            <div class="profit-amount">
-                                +Rp <?= number_format((float)$profit['jumlah_keuntungan'], 2, ',', '.') ?>
-                            </div>
-                            <div class="profit-meta">
-                                <span><?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?></span>
-                                <span class="source-badge"><?= ucfirst(str_replace('_', ' ', $profit['sumber_keuntungan'])) ?></span>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </section>
         <?php endif; ?>
     </main>
 
