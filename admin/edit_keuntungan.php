@@ -72,7 +72,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $sumber_keuntungan = $_POST['sumber_keuntungan'] ?? '';
     $status = $_POST['status'] ?? '';
 
-    // Validasi
     if (empty($investasi_id) || empty($judul_keuntungan) || $jumlah_keuntungan < 0 || empty($tanggal_keuntungan)) {
         $error = 'Harap isi semua field wajib dengan benar.';
     } else {
@@ -197,17 +196,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <label><i class="fas fa-layer-group"></i> Sumber Keuntungan</label>
                     <div class="profit-types">
                         <?php $sources = ['dividen', 'capital_gain', 'bunga', 'bonus', 'lainnya']; ?>
+                        <?php
+                        $ikon_map = [
+                            'dividen' => 'fa-coins',
+                            'capital_gain' => 'fa-chart-line',
+                            'bunga' => 'fa-percent',
+                            'bonus' => 'fa-gift',
+                        ];
+                        ?>
                         <?php foreach ($sources as $src): ?>
                             <div class="profit-type" onclick="selectProfitType(this, '<?= $src ?>')">
                                 <input type="radio" name="sumber_keuntungan" value="<?= $src ?>"
                                        <?= $keuntungan['sumber_keuntungan'] == $src ? 'checked' : '' ?>>
-                                <i class="fas <?= match($src) {
-                                    'dividen' => 'fa-coins',
-                                    'capital_gain' => 'fa-chart-line',
-                                    'bunga' => 'fa-percent',
-                                    'bonus' => 'fa-gift',
-                                    default => 'fa-ellipsis-h';
-                                } ?>"></i><br>
+                                <?php $ikon = $ikon_map[$src] ?? 'fa-ellipsis-h'; ?>
+                                <i class="fas <?= $ikon ?>"></i><br>
                                 <?= ucfirst($src) ?>
                             </div>
                         <?php endforeach; ?>
