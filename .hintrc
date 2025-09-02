@@ -8,7 +8,9 @@
       {
         "ignore": [
           "user-select",
-          "backdrop-filter"
+          "backdrop-filter",
+          "hyphens",
+          "min-height: auto"
         ]
       }
     ]
