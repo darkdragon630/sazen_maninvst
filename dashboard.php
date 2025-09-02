@@ -197,6 +197,7 @@ if (isset($_POST['logout'])) {
 
     <!-- Main Content -->
     <main class="main-content container" role="main">
+
         <!-- Statistics Cards -->
         <section class="stats-section">
             <div class="section-header">
@@ -206,8 +207,8 @@ if (isset($_POST['logout'])) {
                 </h2>
                 <p class="section-subtitle">Gambaran umum investasi dan keuntungan Anda</p>
             </div>
-            
             <div class="stats-grid">
+                <!-- Total Investasi -->
                 <div class="stat-card card-primary" data-aos="fade-up" data-aos-delay="100">
                     <div class="stat-icon-container">
                         <div class="stat-icon">
@@ -217,28 +218,35 @@ if (isset($_POST['logout'])) {
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Investasi</div>
-                        <div class="stat-number" data-count="<?= $stats['total_investasi'] ?>"><?= $stats['total_investasi'] ?></div>
-                        <div class="stat-sublabel">Portofolio Aktif</div>
+                        <div class="stat-number">
+                            Rp <?= number_format($stats['total_investasi_nilai'], 2, ',', '.') ?>
+                        </div>
+                        <div class="stat-sublabel"><?= $stats['total_investasi'] ?> Portofolio</div>
                     </div>
                     <div class="stat-trend positive">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+12%</span>
+                        <span>
+                            <?= $stats['total_investasi_nilai'] > 0 
+                                ? number_format(($stats['total_nilai'] / $stats['total_investasi_nilai']) * 100, 2) 
+                                : '0' ?>%
+                        </span>
                     </div>
                 </div>
 
-                <div class="stat-card card-success" data-aos="fade-up" data-aos-delay="200">
+                <!-- Total Nilai -->
+                <div class="stat-card card-info" data-aos="fade-up" data-aos-delay="200">
                     <div class="stat-icon-container">
                         <div class="stat-icon">
-                            <i class="fas fa-coins"></i>
+                            <i class="fas fa-chart-line"></i>
                         </div>
                         <div class="stat-glow"></div>
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Nilai</div>
-                        <div class="stat-number" data-amount="<?= $stats['total_nilai'] ?>">
+                        <div class="stat-number">
                             Rp <?= number_format($stats['total_nilai'], 2, ',', '.') ?>
                         </div>
-                        <div class="stat-sublabel">Investasi + Keuntungan</div>
+                        <div class="stat-sublabel">Nilai pasar saat ini</div>
                     </div>
                     <div class="stat-trend positive">
                         <i class="fas fa-arrow-up"></i>
@@ -250,10 +258,11 @@ if (isset($_POST['logout'])) {
                     </div>
                 </div>
 
-                <div class="stat-card card-info" data-aos="fade-up" data-aos-delay="300">
+                <!-- Total Keuntungan (dengan ikon khusus dan efek) -->
+                <div class="stat-card card-success total-keuntungan" data-aos="fade-up" data-aos-delay="300">
                     <div class="stat-icon-container">
                         <div class="stat-icon">
-                            <i class="fas fa-chart-line-up"></i>
+                            <i class="fas fa-coins"></i>
                         </div>
                         <div class="stat-glow"></div>
                     </div>
@@ -265,15 +274,16 @@ if (isset($_POST['logout'])) {
                         <div class="stat-sublabel"><?= $stats['total_keuntungan_records'] ?> Transaksi</div>
                     </div>
                     <div class="stat-trend positive">
-                        <i class="fas fa-arrow-up"></i>
-                        <span>+8.5%</span>
+                        <i class="fas fa-star"></i>
+                        <span>Tertinggi sejauh ini</span>
                     </div>
                 </div>
 
+                <!-- ROI Rata-rata -->
                 <div class="stat-card card-warning" data-aos="fade-up" data-aos-delay="400">
                     <div class="stat-icon-container">
                         <div class="stat-icon">
-                            <i class="fas fa-calculator"></i>
+                            <i class="fas fa-percentage"></i>
                         </div>
                         <div class="stat-glow"></div>
                     </div>
@@ -286,11 +296,11 @@ if (isset($_POST['logout'])) {
                                 0%
                             <?php endif; ?>
                         </div>
-                        <div class="stat-sublabel">Return on Investment</div>
+                        <div class="stat-sublabel">Per tahun (CAGR)</div>
                     </div>
-                    <div class="stat-trend positive">
-                        <i class="fas fa-chart-line"></i>
-                        <span>Profit</span>
+                    <div class="stat-trend neutral">
+                        <i class="fas fa-circle-notch"></i>
+                        <span>Stabil</span>
                     </div>
                 </div>
             </div>
@@ -335,7 +345,6 @@ if (isset($_POST['logout'])) {
                     </h2>
                     <p class="section-subtitle">Analisis keuntungan berdasarkan sumber pendapatan</p>
                 </div>
-                
                 <div class="profit-summary">
                     <?php foreach ($sumber_stats as $index => $sumber): 
                         $ikon = $ikon_map[$sumber['sumber_keuntungan']] ?? 'fa-ellipsis-h';
@@ -369,7 +378,6 @@ if (isset($_POST['logout'])) {
                     </h2>
                     <p class="section-subtitle">Distribusi investasi dan keuntungan berdasarkan kategori</p>
                 </div>
-                
                 <div class="category-grid">
                     <?php foreach ($kategori_stats as $index => $kat): ?>
                         <div class="category-card" data-aos="zoom-in" data-aos-delay="<?= ($index + 1) * 100 ?>">
@@ -437,7 +445,6 @@ if (isset($_POST['logout'])) {
                         </a>
                     </div>
                 </div>
-
                 <div class="profit-list">
                     <?php foreach ($keuntungan_list as $index => $profit): ?>
                         <div class="keuntungan-card" data-aos="fade-up" data-aos-delay="<?= ($index + 1) * 100 ?>" data-status="<?= $profit['status'] ?>">
@@ -464,12 +471,10 @@ if (isset($_POST['logout'])) {
                                     </div>
                                 </div>
                             </div>
-
                             <div class="sumber-badge sumber-<?= $profit['sumber_keuntungan'] ?>">
                                 <i class="fas fa-tag"></i>
                                 <?= ucfirst(str_replace('_', ' ', $profit['sumber_keuntungan'])) ?>
                             </div>
-                            
                             <div class="keuntungan-amount">
                                 Rp <?= number_format($profit['jumlah_keuntungan'], 2, ',', '.') ?>
                                 <?php if ($profit['persentase_keuntungan'] > 0): ?>
@@ -481,7 +486,6 @@ if (isset($_POST['logout'])) {
                                     )</small>
                                 <?php endif; ?>
                             </div>
-                            
                             <div class="keuntungan-details">
                                 <div class="keuntungan-detail-item">
                                     <span class="keuntungan-detail-label">Tanggal</span>
@@ -498,7 +502,6 @@ if (isset($_POST['logout'])) {
                                     </span>
                                 </div>
                             </div>
-
                             <div class="profit-card-footer">
                                 <div class="profit-date">
                                     <i class="fas fa-clock"></i>
@@ -552,13 +555,11 @@ if (isset($_POST['logout'])) {
                     </a>
                 </div>
             </div>
-
             <?php if ($investasi): ?>
                 <div class="investments-grid">
                     <?php foreach ($investasi as $index => $item): ?>
                         <div class="investment-card" data-aos="fade-up" data-aos-delay="<?= ($index % 3 + 1) * 100 ?>">
                             <div class="card-glow"></div>
-                            
                             <div class="card-header">
                                 <div class="card-icon">
                                     <i class="fas fa-chart-area"></i>
@@ -578,14 +579,12 @@ if (isset($_POST['logout'])) {
                                     </div>
                                 </div>
                             </div>
-
                             <div class="card-body">
                                 <h3 class="card-title"><?= htmlspecialchars($item['judul_investasi']) ?></h3>
                                 <div class="category-badge">
                                     <i class="fas fa-tag"></i>
                                     <?= htmlspecialchars($item['nama_kategori']) ?>
                                 </div>
-
                                 <div class="amount-section">
                                     <div class="amount-label">
                                         <i class="fas fa-money-bill-wave"></i>
@@ -599,7 +598,6 @@ if (isset($_POST['logout'])) {
                                         <span>+4.2%</span>
                                     </div>
                                 </div>
-
                                 <div class="date-section">
                                     <div class="date-info">
                                         <i class="fas fa-calendar-alt"></i>
@@ -618,7 +616,6 @@ if (isset($_POST['logout'])) {
                                         <?= $statusText ?>
                                     </div>
                                 </div>
-
                                 <?php if (!empty($item['deskripsi'])): ?>
                                     <div class="description-section">
                                         <div class="description-header">
@@ -629,7 +626,6 @@ if (isset($_POST['logout'])) {
                                     </div>
                                 <?php endif; ?>
                             </div>
-
                             <div class="card-footer">
                                 <div class="performance-metrics">
                                     <div class="metric">
@@ -673,7 +669,6 @@ if (isset($_POST['logout'])) {
                 </h2>
                 <p class="section-subtitle">Insight mendalam tentang performa investasi</p>
             </div>
-            
             <div class="analytics-grid">
                 <div class="analytics-card" data-aos="slide-up" data-aos-delay="100">
                     <div class="analytics-header">
@@ -692,7 +687,6 @@ if (isset($_POST['logout'])) {
                         <div class="chart-bar" style="height: 70%"></div>
                     </div>
                 </div>
-
                 <div class="analytics-card" data-aos="slide-up" data-aos-delay="200">
                     <div class="analytics-header">
                         <h4>Risk Score</h4>
@@ -703,7 +697,6 @@ if (isset($_POST['logout'])) {
                         <span class="meter-label">65/100</span>
                     </div>
                 </div>
-
                 <div class="analytics-card" data-aos="slide-up" data-aos-delay="300">
                     <div class="analytics-header">
                         <h4>Profit Ratio</h4>
@@ -733,7 +726,6 @@ if (isset($_POST['logout'])) {
                     </h2>
                     <p class="section-subtitle">Visualisasi dan trend analysis keuntungan investasi</p>
                 </div>
-                
                 <div class="profit-analytics">
                     <div class="profit-analytics-card" data-aos="fade-up" data-aos-delay="100">
                         <div class="analytics-header">
@@ -749,7 +741,6 @@ if (isset($_POST['logout'])) {
                             </div>
                         </div>
                     </div>
-
                     <div class="profit-analytics-card" data-aos="fade-up" data-aos-delay="200">
                         <div class="analytics-header">
                             <h4>Source Distribution</h4>
@@ -764,7 +755,6 @@ if (isset($_POST['logout'])) {
                             </div>
                         </div>
                     </div>
-
                     <div class="profit-analytics-card" data-aos="fade-up" data-aos-delay="300">
                         <div class="analytics-header">
                             <h4>Realized vs Unrealized</h4>
@@ -794,6 +784,7 @@ if (isset($_POST['logout'])) {
                 </div>
             </section>
         <?php endif; ?>
+
     </main>
 
     <!-- Footer -->
@@ -889,21 +880,12 @@ if (isset($_POST['logout'])) {
         // Profit Filter
         document.querySelectorAll('.profit-filter-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                // Remove active class from all buttons
                 document.querySelectorAll('.profit-filter-btn').forEach(b => b.classList.remove('active'));
-                // Add active class to clicked button
                 btn.classList.add('active');
-                
                 const filter = btn.dataset.filter;
                 const cards = document.querySelectorAll('.keuntungan-card');
-                
                 cards.forEach(card => {
-                    if (filter === 'all') {
-                        card.style.display = 'block';
-                    } else {
-                        const cardStatus = card.dataset.status;
-                        card.style.display = cardStatus === filter ? 'block' : 'none';
-                    }
+                    card.style.display = filter === 'all' || card.dataset.status === filter ? 'block' : 'none';
                 });
             });
         });
@@ -924,7 +906,6 @@ if (isset($_POST['logout'])) {
                 animateProgressBars();
                 animateRiskMeters();
             }, 800);
-
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(e => {
                     if (e.isIntersecting) {
@@ -932,7 +913,6 @@ if (isset($_POST['logout'])) {
                     }
                 });
             }, { threshold: 0.1 });
-
             document.querySelectorAll('[data-aos]').forEach(el => observer.observe(el));
         });
     </script>
