@@ -8,6 +8,7 @@
 body, html {
     margin: 0;
     padding: 0;
+    position: fixed;
     font-family: 'Inter', sans-serif;
     background: #f5f7fa;
     color: #333;
