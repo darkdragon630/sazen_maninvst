@@ -5,8 +5,11 @@
     box-sizing: border-box;
 }
 
-body, html {
+/* --- Fix: Prevent Horizontal Scroll --- */
+html, body {
     max-width: 100%;
+    width: 100%;
+    overflow-x: hidden;
     margin: 0;
     padding: 0;
     position: relative;
@@ -34,6 +37,8 @@ a:focus {
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 1rem;
+    width: 100%;
+    overflow: hidden;
 }
 
 /* Loading Screen */
@@ -82,7 +87,7 @@ a:focus {
 /* Background Floating Shapes */
 .background-elements {
     position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
+    top: 0; left: 0; width: 100vw; height: 100vh;
     pointer-events: none;
     overflow: hidden;
     z-index: 0;
@@ -194,7 +199,6 @@ a:focus {
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     position: relative;
     z-index: 10;
-    max-width: 100%;
 }
 
 .header-content {
@@ -347,10 +351,17 @@ a:focus {
 }
 
 /* Header Wave SVG */
+.header-wave {
+    overflow: hidden;
+}
+
 .header-wave svg {
     display: block;
-    width: 100%;
+    width: 100vw;
     height: 60px;
+    max-width: 100%;
+    margin-left: 50%;
+    transform: translateX(-50%);
     fill: #1e90ff;
 }
 
