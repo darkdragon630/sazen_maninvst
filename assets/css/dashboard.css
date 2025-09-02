@@ -8,6 +8,7 @@
 /* --- Fix: Prevent Horizontal Scroll --- */
 html, body {
     max-width: 100vw;
+    display: flex;
     width: 100%;
     overflow-x: hidden;
     margin: 0;
@@ -199,6 +200,8 @@ a:focus {
     box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     position: relative;
     z-index: 10;
+    position: sticky;
+    top: 0;
 }
 
 .header-content {
@@ -374,6 +377,8 @@ a:focus {
 
 /* Main Content */
 .main-content {
+    flex: 1;
+    overflow-y: auto;
     padding: 2rem 0 4rem;
     position: relative;
     z-index: 5;
