@@ -107,7 +107,7 @@ if (isset($_POST['logout'])) {
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 <body>
     <!-- Loading Screen -->
@@ -234,12 +234,18 @@ if (isset($_POST['logout'])) {
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Nilai</div>
-                        <div class="stat-number" data-amount="<?= $stats['total_nilai'] ?>">Rp <?= number_format($stats['total_nilai'], 0, ',', '.') ?></div>
+                        <div class="stat-number" data-amount="<?= $stats['total_nilai'] ?>">
+                            Rp <?= number_format($stats['total_nilai'], 0, ',', '.') ?>
+                        </div>
                         <div class="stat-sublabel">Investasi + Keuntungan</div>
                     </div>
                     <div class="stat-trend positive">
                         <i class="fas fa-arrow-up"></i>
-                        <span>+<?= $stats['total_investasi_nilai'] > 0 ? number_format(($stats['total_keuntungan']/$stats['total_investasi_nilai'])*100, 1) : 0 ?>%</span>
+                        <span>
+                            <?= $stats['total_investasi_nilai'] > 0 
+                                ? number_format(($stats['total_keuntungan'] / $stats['total_investasi_nilai']) * 100, 1) 
+                                : '0' ?>%
+                        </span>
                     </div>
                 </div>
 
@@ -252,7 +258,9 @@ if (isset($_POST['logout'])) {
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Keuntungan</div>
-                        <div class="stat-number">Rp <?= number_format($stats['total_keuntungan'], 0, ',', '.') ?></div>
+                        <div class="stat-number">
+                            Rp <?= number_format($stats['total_keuntungan'], 2, ',', '.') ?>
+                        </div>
                         <div class="stat-sublabel"><?= $stats['total_keuntungan_records'] ?> Transaksi</div>
                     </div>
                     <div class="stat-trend positive">
@@ -272,7 +280,7 @@ if (isset($_POST['logout'])) {
                         <div class="stat-label">ROI Rata-rata</div>
                         <div class="stat-number">
                             <?php if ($stats['total_investasi_nilai'] > 0): ?>
-                                <?= number_format(($stats['total_keuntungan']/$stats['total_investasi_nilai'])*100, 1) ?>%
+                                <?= number_format(($stats['total_keuntungan'] / $stats['total_investasi_nilai']) * 100, 2) ?>%
                             <?php else: ?>
                                 0%
                             <?php endif; ?>
@@ -302,13 +310,18 @@ if (isset($_POST['logout'])) {
                     <?php foreach ($sumber_stats as $sumber): ?>
                         <div class="profit-item" data-aos="zoom-in" data-aos-delay="100">
                             <h4>
-                                <i class="fas <?= $sumber['sumber_keuntungan'] == 'dividen' ? 'fa-coins' : 
-                                                ($sumber['sumber_keuntungan'] == 'capital_gain' ? 'fa-chart-line' : 
-                                                ($sumber['sumber_keuntungan'] == 'bunga' ? 'fa-percent' : 
-                                                ($sumber['sumber_keuntungan'] == 'bonus' ? 'fa-gift' : 'fa-ellipsis-h'))) ?>"></i>
+                                <i class="fas <?= match($sumber['sumber_keuntungan']) {
+                                    'dividen' => 'fa-coins',
+                                    'capital_gain' => 'fa-chart-line',
+                                    'bunga' => 'fa-percent',
+                                    'bonus' => 'fa-gift',
+                                    default => 'fa-ellipsis-h';
+                                } ?>"></i>
                                 <?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?>
                             </h4>
-                            <div class="amount">Rp <?= number_format($sumber['total'], 0, ',', '.') ?></div>
+                            <div class="amount">
+                                Rp <?= number_format($sumber['total'], 2, ',', '.') ?>
+                            </div>
                             <small><?= $sumber['jumlah'] ?> transaksi</small>
                         </div>
                     <?php endforeach; ?>
@@ -332,29 +345,37 @@ if (isset($_POST['logout'])) {
                         <div class="category-card" data-aos="zoom-in" data-aos-delay="<?= ($index + 1) * 100 ?>">
                             <div class="category-header">
                                 <div class="category-icon">
-                                    <i class="fas <?= $index % 4 == 0 ? 'fa-chart-line' : ($index % 4 == 1 ? 'fa-coins' : ($index % 4 == 2 ? 'fa-gem' : 'fa-building')) ?>"></i>
+                                    <i class="fas <?= ['fa-chart-line', 'fa-coins', 'fa-gem', 'fa-building'][$index % 4] ?>"></i>
                                 </div>
                                 <div class="category-info">
                                     <h3 class="category-name"><?= htmlspecialchars($kat['nama_kategori']) ?></h3>
                                     <div class="category-count">
                                         <i class="fas fa-cube"></i>
-                                        <?= $kat['jumlah'] ?? 0 ?> investasi
+                                        <?= $kat['jumlah'] ?> investasi
                                     </div>
                                 </div>
                             </div>
                             <div class="category-value">
-                                <div class="value-amount">Rp <?= number_format($kat['total_nilai'], 0, ',', '.') ?></div>
+                                <div class="value-amount">
+                                    Rp <?= number_format($kat['total_nilai'], 0, ',', '.') ?>
+                                </div>
                                 <div class="value-breakdown">
                                     <small>
                                         Investasi: Rp <?= number_format($kat['total_investasi'], 0, ',', '.') ?><br>
-                                        Keuntungan: Rp <?= number_format($kat['total_keuntungan'], 0, ',', '.') ?>
+                                        Keuntungan: Rp <?= number_format($kat['total_keuntungan'], 2, ',', '.') ?>
                                     </small>
                                 </div>
-                                <div class="value-percentage"><?= $stats['total_nilai'] > 0 ? number_format(($kat['total_nilai'] / $stats['total_nilai'] * 100), 1) : 0 ?>%</div>
+                                <div class="value-percentage">
+                                    <?= $stats['total_nilai'] > 0 
+                                        ? number_format(($kat['total_nilai'] / $stats['total_nilai']) * 100, 1) 
+                                        : '0' ?>%
+                                </div>
                             </div>
                             <div class="progress-container">
                                 <div class="progress-bar">
-                                    <div class="progress-fill" data-width="<?= $stats['total_nilai'] > 0 ? ($kat['total_nilai'] / $stats['total_nilai'] * 100) : 0 ?>"></div>
+                                    <div class="progress-fill" 
+                                         data-width="<?= $stats['total_nilai'] > 0 ? ($kat['total_nilai'] / $stats['total_nilai'] * 100) : 0 ?>">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -404,7 +425,8 @@ if (isset($_POST['logout'])) {
                                         <a href="admin/edit_keuntungan.php?id=<?= $profit['id'] ?>" class="menu-item">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        <a href="admin/delete_keuntungan.php?id=<?= $profit['id'] ?>" class="menu-item delete" onclick="return confirm('Apakah Anda yakin ingin menghapus keuntungan ini?');">
+                                        <a href="admin/delete_keuntungan.php?id=<?= $profit['id'] ?>" class="menu-item delete" 
+                                           onclick="return confirm('Apakah Anda yakin ingin menghapus keuntungan ini?');">
                                             <i class="fas fa-trash"></i> Hapus
                                         </a>
                                     </div>
@@ -413,9 +435,16 @@ if (isset($_POST['logout'])) {
                             
                             <div class="keuntungan-amount">
                                 <i class="fas fa-money-bill-wave"></i>
-                                Rp <?= number_format($profit['jumlah_keuntungan'] ?? 0, 0, ',', '.') ?>
-                                <?php if ($profit['persentase_keuntungan']): ?>
-                                    <small>(<?= number_format($profit['persentase_keuntungan'], 1) ?>%)</small>
+                                Rp <?= number_format($profit['jumlah_keuntungan'], 2, ',', '.') ?>
+                                <?php if ($profit['persentase_keuntungan'] > 0): ?>
+                                    <?php $pct = $profit['persentase_keuntungan'] * 100; // desimal → persen ?>
+                                    <small>(
+                                        <?php 
+                                        echo $pct < 0.01 
+                                            ? number_format($pct, 6) 
+                                            : ($pct < 1 ? number_format($pct, 4) : number_format($pct, 2)); 
+                                        ?>%
+                                    )</small>
                                 <?php endif; ?>
                             </div>
                             
@@ -468,12 +497,11 @@ if (isset($_POST['logout'])) {
                                     </button>
                                     <div class="menu-dropdown">
                                         <a href="admin/edit.php?id=<?= urlencode($item['id']) ?>" class="menu-item">
-                                            <i class="fas fa-edit"></i>
-                                            Edit
+                                            <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        <a href="admin/delete.php?id=<?= urlencode($item['id']) ?>" class="menu-item delete" onclick="return confirm('Apakah Anda yakin ingin menghapus investasi ini?');">
-                                            <i class="fas fa-trash"></i>
-                                            Hapus
+                                        <a href="admin/delete.php?id=<?= urlencode($item['id']) ?>" class="menu-item delete" 
+                                           onclick="return confirm('Apakah Anda yakin ingin menghapus investasi ini?');">
+                                            <i class="fas fa-trash"></i> Hapus
                                         </a>
                                     </div>
                                 </div>
@@ -491,7 +519,9 @@ if (isset($_POST['logout'])) {
                                         <i class="fas fa-money-bill-wave"></i>
                                         Nilai Investasi
                                     </div>
-                                    <div class="amount-value">Rp <?= number_format($item['jumlah'], 0, ',', '.') ?></div>
+                                    <div class="amount-value">
+                                        Rp <?= number_format($item['jumlah'], 2, ',', '.') ?>
+                                    </div>
                                     <div class="amount-trend positive">
                                         <i class="fas fa-trending-up"></i>
                                         <span>+4.2%</span>
@@ -577,7 +607,9 @@ if (isset($_POST['logout'])) {
                     <div class="analytics-header">
                         <h4>Performance YTD</h4>
                         <div class="analytics-value positive">
-                            +<?= $stats['total_investasi_nilai'] > 0 ? number_format(($stats['total_keuntungan']/$stats['total_investasi_nilai'])*100, 1) : 0 ?>%
+                            <?= $stats['total_investasi_nilai'] > 0 
+                                ? number_format(($stats['total_keuntungan'] / $stats['total_investasi_nilai']) * 100, 2) 
+                                : '0' ?>%
                         </div>
                     </div>
                     <div class="mini-chart">
@@ -604,7 +636,9 @@ if (isset($_POST['logout'])) {
                     <div class="analytics-header">
                         <h4>Profit Ratio</h4>
                         <div class="analytics-value info">
-                            <?= $stats['total_nilai'] > 0 ? number_format(($stats['total_keuntungan']/$stats['total_nilai'])*100, 1) : 0 ?>%
+                            <?= $stats['total_nilai'] > 0 
+                                ? number_format(($stats['total_keuntungan'] / $stats['total_nilai']) * 100, 2) 
+                                : '0' ?>%
                         </div>
                     </div>
                     <div class="countdown">
@@ -661,34 +695,23 @@ if (isset($_POST['logout'])) {
     </button>
 
     <script>
-        // Loading Screen Animation
-        window.addEventListener('load', function() {
-            setTimeout(() => {
-                document.getElementById('loadingScreen').classList.add('hide');
-            }, 1500);
+        // Loading Screen
+        window.addEventListener('load', () => {
+            setTimeout(() => document.getElementById('loadingScreen').classList.add('hide'), 1500);
         });
 
-        // Auto-hide toast
+        // Close toast
         function closeToast() {
-            document.getElementById('toast').classList.remove('show');
+            document.getElementById('toast')?.classList.remove('show');
         }
-
-        setTimeout(() => {
-            const toast = document.getElementById('toast');
-            if (toast) {
-                toast.classList.remove('show');
-            }
-        }, 4000);
+        setTimeout(() => closeToast(), 4000);
 
         // Counter Animation
         function animateCounters() {
-            const counters = document.querySelectorAll('[data-count]');
-            counters.forEach(counter => {
+            document.querySelectorAll('[data-count]').forEach(counter => {
                 const target = parseInt(counter.dataset.count);
-                const duration = 2000;
-                const step = target / (duration / 16);
                 let current = 0;
-                
+                const step = target / 2000 * 16;
                 const timer = setInterval(() => {
                     current += step;
                     if (current >= target) {
@@ -702,76 +725,45 @@ if (isset($_POST['logout'])) {
 
         // Progress Bar Animation
         function animateProgressBars() {
-            const bars = document.querySelectorAll('.progress-fill');
-            bars.forEach(bar => {
+            document.querySelectorAll('.progress-fill').forEach(bar => {
                 const width = bar.dataset.width;
-                setTimeout(() => {
-                    bar.style.width = width + '%';
-                }, 500);
+                setTimeout(() => { bar.style.width = width + '%'; }, 500);
             });
         }
 
-        // Card Menu Toggle
+        // Menu Toggle
         document.querySelectorAll('.menu-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
+            toggle.addEventListener('click', e => {
                 e.stopPropagation();
-                const dropdown = this.nextElementSibling;
-                
-                // Close all other dropdowns
-                document.querySelectorAll('.menu-dropdown').forEach(d => {
-                    if (d !== dropdown) {
-                        d.classList.remove('show');
-                    }
-                });
-                
-                dropdown.classList.toggle('show');
+                document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('show'));
+                toggle.nextElementSibling.classList.toggle('show');
             });
         });
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function() {
-            document.querySelectorAll('.menu-dropdown').forEach(dropdown => {
-                dropdown.classList.remove('show');
-            });
+        document.addEventListener('click', () => {
+            document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('show'));
         });
 
-        // Scroll to Top Button
+        // Scroll to Top
         const scrollBtn = document.getElementById('scrollToTop');
-        window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollBtn.classList.add('show');
-            } else {
-                scrollBtn.classList.remove('show');
-            }
+        window.addEventListener('scroll', () => {
+            scrollBtn.classList.toggle('show', window.pageYOffset > 300);
         });
-
-        scrollBtn.addEventListener('click', function() {
+        scrollBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // Initialize animations when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        // AOS
+        document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 animateCounters();
                 animateProgressBars();
             }, 800);
-        });
 
-        // Simple AOS (Animate On Scroll) implementation
-        function observeElements() {
-            const elements = document.querySelectorAll('[data-aos]');
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('aos-animate');
-                    }
-                });
+                entries.forEach(e => e.isIntersecting && e.target.classList.add('aos-animate'));
             }, { threshold: 0.1 });
-
-            elements.forEach(el => observer.observe(el));
-        }
-
-        observeElements();
+            document.querySelectorAll('[data-aos]').forEach(el => observer.observe(el));
+        });
     </script>
 </body>
 </html>
