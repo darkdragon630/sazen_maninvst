@@ -295,6 +295,28 @@ if (isset($_POST['logout'])) {
             </div>
         </section>
 
+        <!-- Profit Overview Section -->
+        <?php if ($stats['total_keuntungan'] > 0): ?>
+            <section class="profit-section">
+                <div class="profit-overview-card" data-aos="zoom-in">
+                    <div class="profit-overview-header">
+                        <div class="profit-overview-title">
+                            <div class="profit-overview-icon">
+                                <i class="fas fa-money-bill-trend-up"></i>
+                            </div>
+                            <div>
+                                <h2>Analisis Keuntungan</h2>
+                                <p>Total Profit: Rp <?= number_format($stats['total_keuntungan'], 2, ',', '.') ?></p>
+                            </div>
+                        </div>
+                        <div class="profit-period-badge">
+                            Year to Date
+                        </div>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+
         <!-- Profit Summary -->
         <?php if ($sumber_stats): 
             $ikon_map = [
@@ -304,20 +326,21 @@ if (isset($_POST['logout'])) {
                 'bonus' => 'fa-gift'
             ];
         ?>
-            <section class="profit-section">
+            <section class="profit-summary-section">
                 <div class="section-header">
                     <h2 class="section-title">
-                        <i class="fas fa-money-bill-trend-up"></i>
-                        Analisis Keuntungan
+                        <i class="fas fa-chart-pie"></i>
+                        Breakdown Keuntungan
                     </h2>
-                    <p class="section-subtitle">Breakdown keuntungan berdasarkan sumber</p>
+                    <p class="section-subtitle">Analisis keuntungan berdasarkan sumber pendapatan</p>
                 </div>
                 
                 <div class="profit-summary">
-                    <?php foreach ($sumber_stats as $sumber): 
+                    <?php foreach ($sumber_stats as $index => $sumber): 
                         $ikon = $ikon_map[$sumber['sumber_keuntungan']] ?? 'fa-ellipsis-h';
+                        $trend = $index == 0 ? 'positive' : ($index == count($sumber_stats) - 1 ? 'negative' : 'neutral');
                     ?>
-                        <div class="profit-item" data-aos="zoom-in" data-aos-delay="100">
+                        <div class="profit-item" data-aos="zoom-in" data-aos-delay="<?= ($index + 1) * 100 ?>">
                             <h4>
                                 <i class="fas <?= $ikon ?>"></i>
                                 <?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?>
@@ -325,7 +348,10 @@ if (isset($_POST['logout'])) {
                             <div class="amount">
                                 Rp <?= number_format($sumber['total'], 2, ',', '.') ?>
                             </div>
-                            <small><?= $sumber['jumlah'] ?> transaksi</small>
+                            <div class="profit-trend <?= $trend ?>">
+                                <i class="fas fa-chart-<?= $trend == 'positive' ? 'line-up' : ($trend == 'negative' ? 'line-down' : 'line') ?>"></i>
+                                <span><?= $sumber['jumlah'] ?> transaksi</span>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -399,6 +425,11 @@ if (isset($_POST['logout'])) {
                         <p class="section-subtitle">Catatan keuntungan investasi terkini</p>
                     </div>
                     <div class="header-actions">
+                        <div class="profit-filter-container">
+                            <button class="profit-filter-btn active" data-filter="all">Semua</button>
+                            <button class="profit-filter-btn" data-filter="realized">Direalisasi</button>
+                            <button class="profit-filter-btn" data-filter="unrealized">Belum Direalisasi</button>
+                        </div>
                         <a href="admin/upload_keuntungan.php" class="add-btn">
                             <i class="fas fa-plus"></i>
                             <span>Tambah Keuntungan</span>
@@ -407,17 +438,14 @@ if (isset($_POST['logout'])) {
                 </div>
 
                 <div class="profit-list">
-                    <?php foreach ($keuntungan_list as $profit): ?>
-                        <div class="keuntungan-card" data-aos="fade-up" data-aos-delay="100">
+                    <?php foreach ($keuntungan_list as $index => $profit): ?>
+                        <div class="keuntungan-card" data-aos="fade-up" data-aos-delay="<?= ($index + 1) * 100 ?>" data-status="<?= $profit['status'] ?>">
                             <div class="keuntungan-header">
-                                <div>
+                                <div class="profit-card-main">
                                     <h4 class="keuntungan-title"><?= htmlspecialchars($profit['judul_keuntungan']) ?></h4>
                                     <p class="keuntungan-investment">
                                         <i class="fas fa-briefcase"></i>
                                         <?= htmlspecialchars($profit['judul_investasi']) ?>
-                                        <span class="sumber-badge sumber-<?= $profit['sumber_keuntungan'] ?>">
-                                            <?= ucfirst($profit['sumber_keuntungan']) ?>
-                                        </span>
                                     </p>
                                 </div>
                                 <div class="card-menu">
@@ -435,9 +463,13 @@ if (isset($_POST['logout'])) {
                                     </div>
                                 </div>
                             </div>
+
+                            <div class="sumber-badge sumber-<?= $profit['sumber_keuntungan'] ?>">
+                                <i class="fas fa-tag"></i>
+                                <?= ucfirst(str_replace('_', ' ', $profit['sumber_keuntungan'])) ?>
+                            </div>
                             
                             <div class="keuntungan-amount">
-                                <i class="fas fa-money-bill-wave"></i>
                                 Rp <?= number_format($profit['jumlah_keuntungan'], 2, ',', '.') ?>
                                 <?php if ($profit['persentase_keuntungan'] > 0): ?>
                                     <?php $pct = $profit['persentase_keuntungan'] * 100; ?>
@@ -450,16 +482,54 @@ if (isset($_POST['logout'])) {
                             </div>
                             
                             <div class="keuntungan-details">
-                                <div>
-                                    <i class="fas fa-calendar"></i>
-                                    <?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?>
+                                <div class="keuntungan-detail-item">
+                                    <span class="keuntungan-detail-label">Tanggal</span>
+                                    <span class="keuntungan-detail-value">
+                                        <i class="fas fa-calendar"></i>
+                                        <?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?>
+                                    </span>
                                 </div>
-                                <span class="status-badge status-<?= $profit['status'] ?>">
-                                    <?= $profit['status'] == 'realized' ? 'Direalisasi' : 'Belum Direalisasi' ?>
-                                </span>
+                                <div class="keuntungan-detail-item">
+                                    <span class="keuntungan-detail-label">Status</span>
+                                    <span class="status-badge status-<?= $profit['status'] ?>">
+                                        <span class="status-indicator-dot"></span>
+                                        <?= $profit['status'] == 'realized' ? 'Direalisasi' : 'Belum Direalisasi' ?>
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="profit-card-footer">
+                                <div class="profit-date">
+                                    <i class="fas fa-clock"></i>
+                                    <small><?= date("H:i", strtotime($profit['tanggal_keuntungan'])) ?></small>
+                                </div>
+                                <div class="profit-id">#PRF-<?= str_pad($profit['id'], 4, '0', STR_PAD_LEFT) ?></div>
                             </div>
                         </div>
                     <?php endforeach; ?>
+                </div>
+            </section>
+        <?php else: ?>
+            <!-- Empty Profit State -->
+            <section class="profit-section">
+                <div class="profit-empty-state" data-aos="fade-up">
+                    <div class="profit-empty-icon">
+                        <i class="fas fa-chart-line-up"></i>
+                    </div>
+                    <h3 class="profit-empty-title">Belum Ada Data Keuntungan</h3>
+                    <p class="profit-empty-description">
+                        Mulai catat keuntungan investasi Anda untuk melihat analisis performa yang mendalam
+                    </p>
+                    <div class="profit-empty-actions">
+                        <a href="admin/upload_keuntungan.php" class="profit-empty-btn">
+                            <i class="fas fa-plus"></i>
+                            Tambah Keuntungan Pertama
+                        </a>
+                        <a href="admin/upload.php" class="profit-empty-btn secondary">
+                            <i class="fas fa-briefcase"></i>
+                            Tambah Investasi
+                        </a>
+                    </div>
                 </div>
             </section>
         <?php endif; ?>
@@ -651,6 +721,78 @@ if (isset($_POST['logout'])) {
                 </div>
             </div>
         </section>
+
+        <!-- Profit Analytics -->
+        <?php if ($stats['total_keuntungan'] > 0): ?>
+            <section class="profit-analytics-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Profit Analytics
+                    </h2>
+                    <p class="section-subtitle">Visualisasi dan trend analysis keuntungan investasi</p>
+                </div>
+                
+                <div class="profit-analytics">
+                    <div class="profit-analytics-card" data-aos="fade-up" data-aos-delay="100">
+                        <div class="analytics-header">
+                            <h4>Monthly Profit Trend</h4>
+                            <div class="analytics-value positive">
+                                +<?= number_format(($stats['total_keuntungan'] / max($stats['total_keuntungan_records'], 1)), 0, ',', '.') ?>
+                            </div>
+                        </div>
+                        <div class="profit-chart-container">
+                            <div class="profit-chart-placeholder">
+                                <i class="fas fa-chart-area"></i>
+                                <span>Profit Trend Chart</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profit-analytics-card" data-aos="fade-up" data-aos-delay="200">
+                        <div class="analytics-header">
+                            <h4>Source Distribution</h4>
+                            <div class="analytics-value info">
+                                <?= count($sumber_stats) ?> Sources
+                            </div>
+                        </div>
+                        <div class="profit-chart-container">
+                            <div class="profit-chart-placeholder">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Source Distribution</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profit-analytics-card" data-aos="fade-up" data-aos-delay="300">
+                        <div class="analytics-header">
+                            <h4>Realized vs Unrealized</h4>
+                            <div class="analytics-value neutral">
+                                <?php
+                                $realized_count = 0;
+                                $unrealized_count = 0;
+                                foreach ($keuntungan_list as $profit) {
+                                    if ($profit['status'] == 'realized') {
+                                        $realized_count++;
+                                    } else {
+                                        $unrealized_count++;
+                                    }
+                                }
+                                $total_shown = $realized_count + $unrealized_count;
+                                echo $total_shown > 0 ? number_format(($realized_count / $total_shown) * 100, 1) : '0';
+                                ?>% Realized
+                            </div>
+                        </div>
+                        <div class="profit-chart-container">
+                            <div class="profit-chart-placeholder">
+                                <i class="fas fa-chart-donut"></i>
+                                <span>Status Analysis</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
     </main>
 
     <!-- Footer -->
@@ -733,6 +875,14 @@ if (isset($_POST['logout'])) {
             });
         }
 
+        // Risk Meter Animation
+        function animateRiskMeters() {
+            document.querySelectorAll('.meter-fill').forEach(meter => {
+                const level = meter.dataset.level;
+                setTimeout(() => { meter.style.width = level + '%'; }, 800);
+            });
+        }
+
         // Menu Toggle
         document.querySelectorAll('.menu-toggle').forEach(toggle => {
             toggle.addEventListener('click', e => {
@@ -743,6 +893,28 @@ if (isset($_POST['logout'])) {
         });
         document.addEventListener('click', () => {
             document.querySelectorAll('.menu-dropdown').forEach(d => d.classList.remove('show'));
+        });
+
+        // Profit Filter
+        document.querySelectorAll('.profit-filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove active class from all buttons
+                document.querySelectorAll('.profit-filter-btn').forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                btn.classList.add('active');
+                
+                const filter = btn.dataset.filter;
+                const cards = document.querySelectorAll('.keuntungan-card');
+                
+                cards.forEach(card => {
+                    if (filter === 'all') {
+                        card.style.display = 'block';
+                    } else {
+                        const cardStatus = card.dataset.status;
+                        card.style.display = cardStatus === filter ? 'block' : 'none';
+                    }
+                });
+            });
         });
 
         // Scroll to Top
@@ -759,6 +931,7 @@ if (isset($_POST['logout'])) {
             setTimeout(() => {
                 animateCounters();
                 animateProgressBars();
+                animateRiskMeters();
             }, 800);
 
             const observer = new IntersectionObserver((entries) => {
