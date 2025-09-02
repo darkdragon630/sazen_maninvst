@@ -1,22 +1,74 @@
-<?php 
+<?php
 require_once 'config.php';
 
-$sql = "
+// Query utama: Semua investasi
+$sql_investasi = "
     SELECT i.id, i.judul_investasi, i.deskripsi, i.jumlah, i.tanggal_investasi, k.nama_kategori
     FROM investasi i
     JOIN kategori k ON i.kategori_id = k.id
     ORDER BY i.tanggal_investasi DESC
 ";
-
-$stmt = $koneksi->query($sql);
+$stmt = $koneksi->query($sql_investasi);
 $investasi = $stmt->fetchAll();
 
-//hitung total investasi
+// Hitung total investasi
 $total_investasi = 0;
 foreach ($investasi as $item) {
     $total_investasi += $item['jumlah'];
 }
 
+// Statistik Umum (dari dashboard)
+$sql_stats = "
+    SELECT 
+        COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
+        (COALESCE(SUM(i.jumlah), 0) + COALESCE(SUM(ki.jumlah_keuntungan), 0)) as total_nilai,
+        COUNT(DISTINCT ki.id) as total_keuntungan_records
+    FROM investasi i
+    LEFT JOIN keuntungan_investasi ki ON i.id = ki.investasi_id
+";
+$stmt_stats = $koneksi->query($sql_stats);
+$stats = $stmt_stats->fetch();
+
+// Statistik per sumber keuntungan
+$sql_sumber = "
+    SELECT 
+        sumber_keuntungan,
+        COUNT(*) as jumlah,
+        SUM(jumlah_keuntungan) as total
+    FROM keuntungan_investasi
+    GROUP BY sumber_keuntungan
+    ORDER BY total DESC
+";
+$stmt_sumber = $koneksi->query($sql_sumber);
+$sumber_stats = $stmt_sumber->fetchAll();
+
+// Keuntungan terbaru (6 teratas)
+$sql_keuntungan = "
+    SELECT 
+        ki.judul_keuntungan,
+        ki.jumlah_keuntungan,
+        ki.tanggal_keuntungan,
+        ki.sumber_keuntungan,
+        i.judul_investasi,
+        kat.nama_kategori
+    FROM keuntungan_investasi ki
+    JOIN investasi i ON ki.investasi_id = i.id
+    JOIN kategori kat ON ki.kategori_id = kat.id
+    ORDER BY ki.tanggal_keuntungan DESC
+    LIMIT 6
+";
+$stmt_keuntungan = $koneksi->query($sql_keuntungan);
+$keuntungan_list = $stmt_keuntungan->fetchAll();
+
+// Profit Ratio: (Total Keuntungan / Total Nilai) * 100
+$profit_ratio = $stats['total_nilai'] > 0 
+    ? ($stats['total_keuntungan'] / $stats['total_nilai']) * 100 
+    : 0;
+
+// Performance YTD: ROI (Total Keuntungan / Total Investasi) * 100
+$performance_ytd = $total_investasi > 0 
+    ? ($stats['total_keuntungan'] / $total_investasi) * 100 
+    : 0;
 ?>
 
 <!DOCTYPE html>
@@ -32,6 +84,7 @@ foreach ($investasi as $item) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
+
     <!-- Loading Animation -->
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-spinner">
@@ -63,7 +116,7 @@ foreach ($investasi as $item) {
                 <i class="fas fa-sync-alt subtitle-icon"></i>
                 Data portofolio diperbarui otomatis dari dashboard admin
             </p>
-            
+
             <!-- Stats Cards in Header -->
             <div class="header-stats">
                 <div class="stat-card total-investment">
@@ -77,26 +130,27 @@ foreach ($investasi as $item) {
                         </div>
                     </div>
                 </div>
-                
-                <div class="stat-card portfolio-count">
+
+                <div class="stat-card total-profit">
                     <div class="stat-icon">
-                        <i class="fas fa-briefcase"></i>
+                        <i class="fas fa-coins"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-label">Jumlah Investasi</div>
-                        <div class="stat-value"><?= count($investasi); ?> Item</div>
+                        <div class="stat-label">Total Keuntungan</div>
+                        <div class="stat-value" data-value="<?= $stats['total_keuntungan'] ?>">
+                            Rp <?= number_format($stats['total_keuntungan'], 0, ',', '.'); ?>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="stat-card performance">
+
+                <div class="stat-card total-value">
                     <div class="stat-icon">
                         <i class="fas fa-chart-line"></i>
                     </div>
                     <div class="stat-content">
-                        <div class="stat-label">Status</div>
-                        <div class="stat-value status-active">
-                            <i class="fas fa-circle status-indicator"></i>
-                            Aktif
+                        <div class="stat-label">Total Nilai</div>
+                        <div class="stat-value" data-value="<?= $stats['total_nilai'] ?>">
+                            Rp <?= number_format($stats['total_nilai'], 0, ',', '.'); ?>
                         </div>
                     </div>
                 </div>
@@ -113,6 +167,36 @@ foreach ($investasi as $item) {
 
     <!-- Main Content -->
     <main class="main-content">
+
+        <!-- Quick Analytics Section -->
+        <section class="quick-stats">
+            <div class="stats-container">
+                <div class="quick-stat-item">
+                    <i class="fas fa-trending-up stat-icon"></i>
+                    <div class="stat-info">
+                        <div class="stat-number"><?= number_format($performance_ytd, 2) ?>%</div>
+                        <div class="stat-desc">Performance YTD</div>
+                    </div>
+                </div>
+
+                <div class="quick-stat-item">
+                    <i class="fas fa-percent stat-icon"></i>
+                    <div class="stat-info">
+                        <div class="stat-number"><?= number_format($profit_ratio, 2) ?>%</div>
+                        <div class="stat-desc">Profit Ratio</div>
+                    </div>
+                </div>
+
+                <div class="quick-stat-item">
+                    <i class="fas fa-file-invoice-dollar stat-icon"></i>
+                    <div class="stat-info">
+                        <div class="stat-number"><?= $stats['total_keuntungan_records'] ?></div>
+                        <div class="stat-desc">Transaksi Keuntungan</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Filter & Sort Section -->
         <section class="portfolio-controls">
             <div class="controls-header">
@@ -129,7 +213,7 @@ foreach ($investasi as $item) {
                     </button>
                 </div>
             </div>
-            
+
             <div class="controls-filters">
                 <div class="filter-group">
                     <label for="sortSelect">Urutkan:</label>
@@ -140,7 +224,7 @@ foreach ($investasi as $item) {
                         <option value="amount-asc">Nilai Terendah</option>
                     </select>
                 </div>
-                
+
                 <div class="filter-group">
                     <label for="categoryFilter">Kategori:</label>
                     <select id="categoryFilter" class="filter-select">
@@ -152,7 +236,7 @@ foreach ($investasi as $item) {
                         <?php endforeach; ?>
                     </select>
                 </div>
-                
+
                 <div class="search-container">
                     <i class="fas fa-search search-icon"></i>
                     <input type="text" id="searchInput" class="search-input" placeholder="Cari investasi...">
@@ -276,35 +360,66 @@ foreach ($investasi as $item) {
                 </button>
             </div>
         <?php endif; ?>
-        
-        <!-- Quick Stats Summary -->
-        <section class="quick-stats">
-            <div class="stats-container">
-                <div class="quick-stat-item">
-                    <i class="fas fa-trending-up stat-icon"></i>
-                    <div class="stat-info">
-                        <div class="stat-number">+15.2%</div>
-                        <div class="stat-desc">Pertumbuhan YTD</div>
-                    </div>
+
+        <!-- Breakdown Keuntungan -->
+        <?php if ($sumber_stats): ?>
+            <section class="profit-breakdown">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-pie"></i>
+                    Breakdown Keuntungan
+                </h2>
+                <div class="breakdown-grid">
+                    <?php foreach ($sumber_stats as $sumber): ?>
+                        <div class="breakdown-item">
+                            <div class="breakdown-header">
+                                <span class="source-icon">
+                                    <i class="fas <?= [
+                                        'dividen' => 'fa-coins',
+                                        'capital_gain' => 'fa-chart-line',
+                                        'bunga' => 'fa-percent',
+                                        'bonus' => 'fa-gift'
+                                    ][$sumber['sumber_keuntungan']] ?? 'fa-ellipsis-h' ?>"></i>
+                                </span>
+                                <span class="source-name"><?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?></span>
+                            </div>
+                            <div class="breakdown-value">
+                                Rp <?= number_format($sumber['total'], 0, ',', '.') ?>
+                            </div>
+                            <div class="breakdown-count">
+                                <?= $sumber['jumlah'] ?> transaksi
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-                
-                <div class="quick-stat-item">
-                    <i class="fas fa-shield-alt stat-icon"></i>
-                    <div class="stat-info">
-                        <div class="stat-number">92%</div>
-                        <div class="stat-desc">Risk Score</div>
-                    </div>
+            </section>
+        <?php endif; ?>
+
+        <!-- Catatan Keuntungan Terbaru -->
+        <?php if ($keuntungan_list): ?>
+            <section class="recent-profits">
+                <h2 class="section-title">
+                    <i class="fas fa-chart-line-up"></i>
+                    Keuntungan Terbaru
+                </h2>
+                <div class="profits-list">
+                    <?php foreach ($keuntungan_list as $profit): ?>
+                        <div class="profit-item">
+                            <div class="profit-main">
+                                <h3><?= htmlspecialchars($profit['judul_keuntungan']) ?></h3>
+                                <p><?= htmlspecialchars($profit['judul_investasi']) ?> • <?= htmlspecialchars($profit['nama_kategori']) ?></p>
+                            </div>
+                            <div class="profit-amount">
+                                +Rp <?= number_format($profit['jumlah_keuntungan'], 0, ',', '.') ?>
+                            </div>
+                            <div class="profit-meta">
+                                <span><?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?></span>
+                                <span class="source-badge"><?= ucfirst(str_replace('_', ' ', $profit['sumber_keuntungan'])) ?></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-                
-                <div class="quick-stat-item">
-                    <i class="fas fa-clock stat-icon"></i>
-                    <div class="stat-info">
-                        <div class="stat-number"><?= count($investasi) ?></div>
-                        <div class="stat-desc">Active Positions</div>
-                    </div>
-                </div>
-            </div>
-        </section>
+            </section>
+        <?php endif; ?>
     </main>
 
     <!-- Footer -->
@@ -355,7 +470,6 @@ foreach ($investasi as $item) {
         function createParticles() {
             const container = document.getElementById('particlesContainer');
             const particleCount = 50;
-            
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
@@ -365,19 +479,7 @@ foreach ($investasi as $item) {
                 container.appendChild(particle);
             }
         }
-        
         createParticles();
-
-        // Investment Card Interactions
-        document.querySelectorAll('.investment-card').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.querySelector('.card-glow').style.opacity = '1';
-            });
-            
-            card.addEventListener('mouseleave', function() {
-                this.querySelector('.card-glow').style.opacity = '0';
-            });
-        });
 
         // Counter Animation for Values
         function animateCounters() {
@@ -386,7 +488,6 @@ foreach ($investasi as $item) {
                 const duration = 2000;
                 const step = target / (duration / 16);
                 let current = 0;
-                
                 const timer = setInterval(() => {
                     current += step;
                     if (current >= target) {
@@ -398,34 +499,11 @@ foreach ($investasi as $item) {
             });
         }
 
-        // Filter and Search Functionality
-        document.getElementById('sortSelect').addEventListener('change', function() {
-            // Sort implementation here
-        });
-
-        document.getElementById('categoryFilter').addEventListener('change', function() {
-            // Filter implementation here
-        });
-
-        document.getElementById('searchInput').addEventListener('input', function() {
-            // Search implementation here
-            keyword = this.value.toLowerCase();
-            document.querySelectorALL('.investment-card').foreach(card => {
-                const title = card.dataset.title.toLowerCase();
-                if (title.includes(keyword)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            })
-        });
-
         // View Toggle
         document.querySelectorAll('.toggle-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                
                 const view = this.dataset.view;
                 const grid = document.getElementById('investmentsGrid');
                 grid.className = view === 'list' ? 'investments-list' : 'investments-grid';
@@ -435,15 +513,19 @@ foreach ($investasi as $item) {
         // Scroll to Top
         const scrollBtn = document.getElementById('scrollToTop');
         window.addEventListener('scroll', function() {
-            if (window.pageYOffset > 300) {
-                scrollBtn.style.display = 'block';
-            } else {
-                scrollBtn.style.display = 'none';
-            }
+            scrollBtn.style.display = window.pageYOffset > 300 ? 'block' : 'none';
         });
-
         scrollBtn.addEventListener('click', function() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Search Functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const keyword = this.value.toLowerCase();
+            document.querySelectorAll('.investment-card').forEach(card => {
+                const title = card.dataset.title.toLowerCase();
+                card.style.display = title.includes(keyword) ? 'block' : 'none';
+            });
         });
 
         // Initialize animations
@@ -451,7 +533,7 @@ foreach ($investasi as $item) {
             animateCounters();
         }, 1000);
 
-        // Intersection Observer for card animations
+        // Intersection Observer for animations
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -459,7 +541,6 @@ foreach ($investasi as $item) {
                 }
             });
         }, { threshold: 0.1 });
-
         document.querySelectorAll('.investment-card').forEach(card => {
             observer.observe(card);
         });
