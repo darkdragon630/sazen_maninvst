@@ -401,11 +401,12 @@ a:focus {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    transition: box-shadow 0.3s ease;
+    transition: all 0.3s ease;
     cursor: default;
 }
 
 .stat-card:hover {
+    transform: translateY(-4px);
     box-shadow: 0 8px 20px rgba(30,144,255,0.2);
 }
 
@@ -526,6 +527,48 @@ a:focus {
 .card-warning .stat-glow {
     color: #212529;
     background: rgba(0,0,0,0.1);
+}
+
+/* --- Special Enhancement for Total Keuntungan --- */
+.card-success.total-keuntungan {
+    position: relative;
+    background: linear-gradient(135deg, #28a745, #1e7e34) !important;
+}
+
+.card-success.total-keuntungan .stat-glow {
+    background: rgba(255,255,255,0.4);
+    animation: pulse 2.5s infinite;
+}
+
+/* Add Coin Icon Inside Total Keuntungan */
+.card-success.total-keuntungan .stat-icon-container::after {
+    content: '\f87e'; /* Font Awesome: fa-coins or similar */
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.8rem;
+    color: #fff;
+    z-index: 2;
+}
+
+/* Add Sparkle Emoji */
+.card-success.total-keuntungan::before {
+    content: '💰';
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    font-size: 1.3rem;
+    z-index: 2;
+    opacity: 0.9;
+    animation: floatIcon 3s infinite ease-in-out;
+}
+
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
 }
 
 /* Profit Overview */
@@ -1601,6 +1644,11 @@ a:focus {
     }
 }
 
+@keyframes floatIcon {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
 /* AOS Animation Helper */
 [data-aos] {
     opacity: 0;
@@ -1642,11 +1690,21 @@ a:focus {
     .profit-filter-container {
         margin-bottom: 1rem;
     }
+
+    /* Responsive Stat Number */
+    .stat-number {
+        font-size: 1.6rem;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+    }
 }
 
 @media (max-width: 480px) {
     .stat-number {
-        font-size: 1.4rem;
+        font-size: 1.6rem !important;
+        font-weight: 800;
     }
 
     .section-title {
@@ -1660,5 +1718,10 @@ a:focus {
 
     .logout-btn span {
         display: none;
+    }
+
+    /* Extra padding for mobile */
+    .stat-card {
+        padding: 1.4rem 1.2rem 1.8rem;
     }
 }
