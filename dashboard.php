@@ -296,7 +296,15 @@ if (isset($_POST['logout'])) {
         </section>
 
         <!-- Profit Summary -->
-        <?php if ($sumber_stats): ?>
+        <?php if ($sumber_stats): 
+            // Mapping sumber keuntungan ke ikon
+            $ikon_map = [
+                'dividen' => 'fa-coins',
+                'capital_gain' => 'fa-chart-line',
+                'bunga' => 'fa-percent',
+                'bonus' => 'fa-gift'
+            ];
+        ?>
             <section class="profit-section">
                 <div class="section-header">
                     <h2 class="section-title">
@@ -307,16 +315,12 @@ if (isset($_POST['logout'])) {
                 </div>
                 
                 <div class="profit-summary">
-                    <?php foreach ($sumber_stats as $sumber): ?>
+                    <?php foreach ($sumber_stats as $sumber): 
+                        $ikon = $ikon_map[$sumber['sumber_keuntungan']] ?? 'fa-ellipsis-h';
+                    ?>
                         <div class="profit-item" data-aos="zoom-in" data-aos-delay="100">
                             <h4>
-                                <i class="fas <?= match($sumber['sumber_keuntungan']) {
-                                    'dividen' => 'fa-coins',
-                                    'capital_gain' => 'fa-chart-line',
-                                    'bunga' => 'fa-percent',
-                                    'bonus' => 'fa-gift',
-                                    default => 'fa-ellipsis-h';
-                                } ?>"></i>
+                                <i class="fas <?= $ikon ?>"></i>
                                 <?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?>
                             </h4>
                             <div class="amount">
@@ -437,13 +441,11 @@ if (isset($_POST['logout'])) {
                                 <i class="fas fa-money-bill-wave"></i>
                                 Rp <?= number_format($profit['jumlah_keuntungan'], 2, ',', '.') ?>
                                 <?php if ($profit['persentase_keuntungan'] > 0): ?>
-                                    <?php $pct = $profit['persentase_keuntungan'] * 100; // desimal → persen ?>
+                                    <?php $pct = $profit['persentase_keuntungan'] * 100; ?>
                                     <small>(
-                                        <?php 
-                                        echo $pct < 0.01 
+                                        <?= $pct < 0.01 
                                             ? number_format($pct, 6) 
-                                            : ($pct < 1 ? number_format($pct, 4) : number_format($pct, 2)); 
-                                        ?>%
+                                            : ($pct < 1 ? number_format($pct, 4) : number_format($pct, 2)); ?>%
                                     )</small>
                                 <?php endif; ?>
                             </div>
@@ -702,7 +704,8 @@ if (isset($_POST['logout'])) {
 
         // Close toast
         function closeToast() {
-            document.getElementById('toast')?.classList.remove('show');
+            const toast = document.getElementById('toast');
+            if (toast) toast.classList.remove('show');
         }
         setTimeout(() => closeToast(), 4000);
 
@@ -752,7 +755,7 @@ if (isset($_POST['logout'])) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // AOS
+        // AOS (Animate On Scroll)
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 animateCounters();
@@ -760,8 +763,13 @@ if (isset($_POST['logout'])) {
             }, 800);
 
             const observer = new IntersectionObserver((entries) => {
-                entries.forEach(e => e.isIntersecting && e.target.classList.add('aos-animate'));
+                entries.forEach(e => {
+                    if (e.isIntersecting) {
+                        e.target.classList.add('aos-animate');
+                    }
+                });
             }, { threshold: 0.1 });
+
             document.querySelectorAll('[data-aos]').forEach(el => observer.observe(el));
         });
     </script>
