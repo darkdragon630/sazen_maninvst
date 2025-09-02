@@ -1,6 +1,6 @@
 /* ===== CSS VARIABLES & RESET ===== */
 :root {
-    /* Enhanced Color System */
+    /* Color System */
     --primary-50: #eff6ff;
     --primary-100: #dbeafe;
     --primary-200: #bfdbfe;
@@ -57,12 +57,12 @@
     --gray-900: #111827;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
-    --gradient-success: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
-    --gradient-warning: linear-gradient(135deg, var(--warning-500) 0%, var(--warning-600) 100%);
-    --gradient-info: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
-    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0.1) 100%);
-    --gradient-card: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
+    --gradient-primary: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+    --gradient-success: linear-gradient(135deg, var(--success-500), var(--success-600));
+    --gradient-warning: linear-gradient(135deg, var(--warning-500), var(--warning-600));
+    --gradient-info: linear-gradient(135deg, #06b6d4, #0891b2);
+    --gradient-glass: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.1));
+    --gradient-card: linear-gradient(145deg, #ffffff, #f8fafc);
 
     /* Spacing */
     --space-1: 0.25rem;
@@ -126,6 +126,7 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: var(--gray-800);
     line-height: 1.6;
+    min-height: 100vh;
 }
 
 /* ===== CONTAINER ===== */
@@ -133,6 +134,7 @@ body {
     max-width: 1400px;
     margin: 0 auto;
     padding: 0 var(--space-6);
+    width: 100%;
 }
 
 /* ===== LOADING SCREEN ===== */
@@ -148,23 +150,22 @@ body {
     justify-content: center;
     z-index: 9999;
     backdrop-filter: blur(10px);
-    transition: opacity var(--transition-slow), visibility var(--transition-slow);
+    transition: opacity 0.5s ease;
 }
 
 .loading-screen.hide {
     opacity: 0;
-    visibility: hidden;
+    pointer-events: none;
 }
 
 .loading-container {
     text-align: center;
-    color: white;
 }
 
 .loading-logo {
     font-size: 4rem;
+    color: var(--primary-600);
     margin-bottom: var(--space-6);
-    animation: pulse 2s ease-in-out infinite;
 }
 
 .loading-spinner {
@@ -179,7 +180,7 @@ body {
 
 .loading-text {
     font-size: var(--font-size-lg);
-    opacity: 0.8;
+    color: var(--gray-600);
 }
 
 @keyframes spin {
@@ -210,41 +211,41 @@ body {
     width: 300px;
     height: 300px;
     top: 10%;
-    left: 10%;
+    right: 10%;
     background: var(--primary-500);
-    animation: float 15s ease-in-out infinite;
+    animation: float 20s ease-in-out infinite;
 }
 
 .shape-2 {
     width: 200px;
     height: 200px;
-    top: 60%;
-    right: 15%;
+    bottom: 20%;
+    left: 15%;
     background: var(--success-500);
-    animation: float 20s ease-in-out infinite 2s;
+    animation: float 20s ease-in-out infinite 5s;
 }
 
 .shape-3 {
     width: 150px;
     height: 150px;
-    bottom: 20%;
-    left: 25%;
+    top: 60%;
+    right: 30%;
     background: var(--warning-500);
-    animation: float 18s ease-in-out infinite 4s;
+    animation: float 20s ease-in-out infinite 10s;
 }
 
 .shape-4 {
     width: 250px;
     height: 250px;
-    top: 40%;
-    right: 5%;
+    top: 30%;
+    left: 50%;
     background: var(--error-500);
-    animation: float 22s ease-in-out infinite 6s;
+    animation: float 20s ease-in-out infinite 15s;
 }
 
 @keyframes float {
-    0%, 100% { transform: translateY(0) rotate(0deg); }
-    50% { transform: translateY(-20px) rotate(180deg); }
+    0%, 100% { transform: translateY(0) translateX(0) rotate(0deg); }
+    50% { transform: translateY(-20px) translateX(20px) rotate(180deg); }
 }
 
 /* ===== TOAST NOTIFICATION ===== */
@@ -307,7 +308,7 @@ body {
     font-size: var(--font-size-sm);
     cursor: pointer;
     color: var(--gray-500);
-    transition: color var(--transition-fast);
+    transition: all var(--transition-fast);
 }
 
 .toast-close:hover {
@@ -345,6 +346,7 @@ body {
     align-items: center;
     position: relative;
     z-index: 2;
+    padding: 0 var(--space-4);
 }
 
 .logo-container {
@@ -362,20 +364,20 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--font-size-2xl);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    font-size: var(--font-size-xl);
+    box-shadow: var(--shadow-md);
+    animation: pulse 3s ease-in-out infinite;
 }
 
 .logo-pulse {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 80px;
-    height: 80px;
+    top: -10%;
+    left: -10%;
+    width: 120%;
+    height: 120%;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 50%;
+    border-radius: var(--radius-full);
     animation: pulse-ring 3s ease-out infinite;
 }
 
@@ -652,8 +654,8 @@ body {
     color: var(--success-700);
 }
 
-/* ===== PROFIT & KEUNTUNGAN ===== */
-.profit-section {
+/* ===== PROFIT SUMMARY ===== */
+.profit-summary-section {
     margin-bottom: var(--space-16);
 }
 
@@ -705,7 +707,7 @@ body {
     font-weight: 500;
 }
 
-/* Recent Profits */
+/* ===== RECENT PROFITS ===== */
 .recent-profits-section {
     margin-bottom: var(--space-16);
 }
@@ -765,6 +767,7 @@ body {
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-top: var(--space-2);
 }
 
 .sumber-badge.sumber-dividen {
@@ -1066,8 +1069,6 @@ body {
     transition: all var(--transition-fast);
     z-index: var(--z-dropdown);
     overflow: hidden;
-    max-height: 300px;
-    overflow-y: auto;
 }
 
 .menu-dropdown.show {
@@ -1436,20 +1437,6 @@ body {
     box-shadow: var(--shadow-2xl);
 }
 
-/* ===== AOS ANIMATIONS ===== */
-[data-aos] {
-    opacity: 0;
-    transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-[data-aos="fade-up"] {
-    transform: translateY(30px);
-}
-
-[data-aos="zoom-in"] {
-    transform: scale(0.95);
-}
-
 /* ===== RESPONSIVE DESIGN ===== */
 @media (max-width: 768px) {
     .container {
@@ -1458,6 +1445,7 @@ body {
 
     .header-content {
         flex-direction: column;
+        align-items: stretch;
         gap: var(--space-4);
         text-align: center;
     }
@@ -1474,14 +1462,10 @@ body {
         grid-template-columns: 1fr;
     }
 
-    .form-row {
-        grid-template-columns: 1fr;
-    }
-
     .section-header .header-content {
         flex-direction: column;
+        align-items: stretch;
         gap: var(--space-2);
-        text-align: center;
     }
 
     .quick-actions,
@@ -1499,6 +1483,10 @@ body {
     .footer-links {
         justify-content: center;
     }
+
+    .investment-card {
+        margin-bottom: var(--space-6);
+    }
 }
 
 @media (max-width: 480px) {
@@ -1506,17 +1494,18 @@ body {
         padding: 0 var(--space-2);
     }
 
-    .investment-card {
-        margin-bottom: var(--space-4);
-    }
-
-    .profit-item,
-    .keuntungan-card {
+    .investment-card,
+    .keuntungan-card,
+    .stat-card {
         padding: var(--space-4);
     }
 
     .stat-number {
         font-size: var(--font-size-2xl);
+    }
+
+    .keuntungan-amount {
+        font-size: var(--font-size-lg);
     }
 }
 
