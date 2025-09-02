@@ -822,16 +822,6 @@ if (isset($_POST['logout'])) {
         </div>
     </footer>
 
-    <!-- Quick Actions FAB -->
-    <div class="quick-actions">
-        <a href="admin/upload_keuntungan.php" class="fab fab-success" title="Tambah Keuntungan">
-            <i class="fas fa-chart-line-up"></i>
-        </a>
-        <a href="admin/upload.php" class="fab fab-primary" title="Tambah Investasi">
-            <i class="fas fa-plus"></i>
-        </a>
-    </div>
-
     <!-- Scroll to Top Button -->
     <button class="scroll-to-top" id="scrollToTop">
         <i class="fas fa-chevron-up"></i>
