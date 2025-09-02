@@ -763,7 +763,6 @@ a:focus {
 }
 
 /* Recent Profits */
-/* Recent Profits */
 .recent-profits-section {
     margin-top: 3rem;
 }
@@ -1028,7 +1027,8 @@ a:focus {
 .card-glow {
     position: absolute;
     top: -20px; right: -20px;
-    width: 80px; height: 80px;
+    width: 80px;
+    height: 80px;
     background: rgba(30,144,255,0.15);
     border-radius: 50%;
     filter: blur(20px);
