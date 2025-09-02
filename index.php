@@ -17,7 +17,7 @@ foreach ($investasi as $item) {
     $total_investasi += $item['jumlah'];
 }
 
-// Statistik Umum (dari dashboard)
+// Statistik Umum (dari dashboard) - PASTIKAN PRECISI DESIMAL
 $sql_stats = "
     SELECT 
         COALESCE(SUM(ki.jumlah_keuntungan), 0) as total_keuntungan,
@@ -28,6 +28,10 @@ $sql_stats = "
 ";
 $stmt_stats = $koneksi->query($sql_stats);
 $stats = $stmt_stats->fetch();
+
+// Konversi ke float agar presisi tetap terjaga
+$total_keuntungan = (float)$stats['total_keuntungan'];
+$total_nilai = (float)$stats['total_nilai'];
 
 // Statistik per sumber keuntungan
 $sql_sumber = "
@@ -61,14 +65,10 @@ $stmt_keuntungan = $koneksi->query($sql_keuntungan);
 $keuntungan_list = $stmt_keuntungan->fetchAll();
 
 // Profit Ratio: (Total Keuntungan / Total Nilai) * 100
-$profit_ratio = $stats['total_nilai'] > 0 
-    ? ($stats['total_keuntungan'] / $stats['total_nilai']) * 100 
-    : 0;
+$profit_ratio = $total_nilai > 0 ? ($total_keuntungan / $total_nilai) * 100 : 0;
 
 // Performance YTD: ROI (Total Keuntungan / Total Investasi) * 100
-$performance_ytd = $total_investasi > 0 
-    ? ($stats['total_keuntungan'] / $total_investasi) * 100 
-    : 0;
+$performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi) * 100 : 0;
 ?>
 
 <!DOCTYPE html>
@@ -126,7 +126,7 @@ $performance_ytd = $total_investasi > 0
                     <div class="stat-content">
                         <div class="stat-label">Total Investasi</div>
                         <div class="stat-value" data-value="<?= $total_investasi ?>">
-                            Rp <?= number_format($total_investasi, 0, ',', '.'); ?>
+                            Rp <?= number_format($total_investasi, 2, ',', '.'); ?>
                         </div>
                     </div>
                 </div>
@@ -137,8 +137,8 @@ $performance_ytd = $total_investasi > 0
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Keuntungan</div>
-                        <div class="stat-value" data-value="<?= $stats['total_keuntungan'] ?>">
-                            Rp <?= number_format($stats['total_keuntungan'], 0, ',', '.'); ?>
+                        <div class="stat-value" data-value="<?= $total_keuntungan ?>">
+                            Rp <?= number_format($total_keuntungan, 2, ',', '.'); ?>
                         </div>
                     </div>
                 </div>
@@ -149,8 +149,8 @@ $performance_ytd = $total_investasi > 0
                     </div>
                     <div class="stat-content">
                         <div class="stat-label">Total Nilai</div>
-                        <div class="stat-value" data-value="<?= $stats['total_nilai'] ?>">
-                            Rp <?= number_format($stats['total_nilai'], 0, ',', '.'); ?>
+                        <div class="stat-value" data-value="<?= $total_nilai ?>">
+                            Rp <?= number_format($total_nilai, 2, ',', '.'); ?>
                         </div>
                     </div>
                 </div>
@@ -288,7 +288,7 @@ $performance_ytd = $total_investasi > 0
                                 </div>
                                 <div class="amount-value-container">
                                     <span class="amount-value" data-amount="<?= $item['jumlah'] ?>">
-                                        Rp <?= number_format($item['jumlah'], 0, ',', '.'); ?>
+                                        Rp <?= number_format($item['jumlah'], 2, ',', '.'); ?>
                                     </span>
                                     <div class="amount-progress">
                                         <div class="progress-bar" style="width: <?= min(($item['jumlah'] / $total_investasi) * 100, 100) ?>%"></div>
@@ -383,7 +383,7 @@ $performance_ytd = $total_investasi > 0
                                 <span class="source-name"><?= ucfirst(str_replace('_', ' ', $sumber['sumber_keuntungan'])) ?></span>
                             </div>
                             <div class="breakdown-value">
-                                Rp <?= number_format($sumber['total'], 0, ',', '.') ?>
+                                Rp <?= number_format((float)$sumber['total'], 2, ',', '.') ?>
                             </div>
                             <div class="breakdown-count">
                                 <?= $sumber['jumlah'] ?> transaksi
@@ -409,7 +409,7 @@ $performance_ytd = $total_investasi > 0
                                 <p><?= htmlspecialchars($profit['judul_investasi']) ?> • <?= htmlspecialchars($profit['nama_kategori']) ?></p>
                             </div>
                             <div class="profit-amount">
-                                +Rp <?= number_format($profit['jumlah_keuntungan'], 0, ',', '.') ?>
+                                +Rp <?= number_format((float)$profit['jumlah_keuntungan'], 2, ',', '.') ?>
                             </div>
                             <div class="profit-meta">
                                 <span><?= date("d M Y", strtotime($profit['tanggal_keuntungan'])) ?></span>
@@ -484,7 +484,7 @@ $performance_ytd = $total_investasi > 0
         // Counter Animation for Values
         function animateCounters() {
             document.querySelectorAll('[data-value]').forEach(counter => {
-                const target = parseInt(counter.dataset.value);
+                const target = parseFloat(counter.dataset.value);
                 const duration = 2000;
                 const step = target / (duration / 16);
                 let current = 0;
@@ -494,7 +494,7 @@ $performance_ytd = $total_investasi > 0
                         current = target;
                         clearInterval(timer);
                     }
-                    counter.textContent = 'Rp ' + Math.floor(current).toLocaleString('id-ID');
+                    counter.textContent = 'Rp ' + current.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
                 }, 16);
             });
         }
