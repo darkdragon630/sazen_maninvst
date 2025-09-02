@@ -8,20 +8,19 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Ambil data investasi untuk dropdown - cek kolom yang tersedia
+// Ambil data investasi untuk dropdown
 try {
-    // Pertama, cek struktur tabel untuk menentukan kolom yang benar
     $check_columns = $koneksi->query("DESCRIBE investasi")->fetchAll();
     $column_names = array_column($check_columns, 'Field');
     
-    // Tentukan nama kolom yang benar untuk jumlah investasi
-    $amount_column = 'jumlah_investasi'; // default
-    if (in_array('jumlah', $column_names)) {
-        $amount_column = 'jumlah';
-    } elseif (in_array('amount', $column_names)) {
-        $amount_column = 'amount';
+    // Tentukan kolom jumlah investasi
+    $amount_column = 'jumlah'; // default
+    if (in_array('jumlah_investasi', $column_names)) {
+        $amount_column = 'jumlah_investasi';
     } elseif (in_array('nilai_investasi', $column_names)) {
         $amount_column = 'nilai_investasi';
+    } elseif (in_array('amount', $column_names)) {
+        $amount_column = 'amount';
     }
     
     $sql_investasi = "SELECT i.id, i.judul_investasi, 
@@ -33,16 +32,8 @@ try {
     $stmt_investasi = $koneksi->query($sql_investasi);
     $investasi_list = $stmt_investasi->fetchAll();
 } catch (Exception $e) {
-    // Fallback jika ada error - ambil data tanpa kolom jumlah
     error_log("INVESTASI_QUERY_ERROR: " . $e->getMessage());
-    $sql_investasi = "SELECT i.id, i.judul_investasi, 
-                             0 as jumlah_investasi, 
-                             k.nama_kategori, i.kategori_id 
-                      FROM investasi i 
-                      JOIN kategori k ON i.kategori_id = k.id 
-                      ORDER BY i.judul_investasi";
-    $stmt_investasi = $koneksi->query($sql_investasi);
-    $investasi_list = $stmt_investasi->fetchAll();
+    $investasi_list = [];
 }
 
 $error = '';
@@ -55,121 +46,113 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $judul_keuntungan = trim($_POST['judul_keuntungan'] ?? '');
     $deskripsi = trim($_POST['deskripsi'] ?? '');
     
-    // Prioritas: gunakan nilai parsed dari JavaScript jika ada
-    if (isset($_POST['jumlah_keuntungan_parsed']) && !empty($_POST['jumlah_keuntungan_parsed'])) {
+    // Parsing jumlah keuntungan
+    if (isset($_POST['jumlah_keuntungan_parsed']) && is_numeric($_POST['jumlah_keuntungan_parsed'])) {
         $jumlah_keuntungan = floatval($_POST['jumlah_keuntungan_parsed']);
     } else {
-        // Fallback: parse manual jika JavaScript tidak jalan
         $jumlah_keuntungan_raw = trim($_POST['jumlah_keuntungan'] ?? '0');
-        
-        // Handle berbagai format input dengan presisi tinggi
-        $last_comma = strrpos($jumlah_keuntungan_raw, ',');
-        $last_dot = strrpos($jumlah_keuntungan_raw, '.');
-        
-        if ($last_comma !== false && $last_dot !== false) {
-            // Ada keduanya - yang terakhir adalah desimal
-            if ($last_comma > $last_dot) {
-                // Format Indonesia: 1.234.567,89
-                $jumlah_keuntungan = floatval(str_replace(['.', ','], ['', '.'], $jumlah_keuntungan_raw));
-            } else {
-                // Format International: 1,234,567.89
-                $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
-            }
-        } elseif ($last_comma !== false) {
-            // Hanya ada koma
-            $parts = explode(',', $jumlah_keuntungan_raw);
-            if (count($parts) == 2 && strlen($parts[1]) <= 2) {
-                // Kemungkinan desimal: 0,87 atau 1234,56
-                $jumlah_keuntungan = floatval(str_replace(',', '.', $jumlah_keuntungan_raw));
-            } else {
-                // Kemungkinan ribuan: 1,234,567
-                $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
-            }
-        } elseif ($last_dot !== false) {
-            // Hanya ada titik
-            $parts = explode('.', $jumlah_keuntungan_raw);
-            if (count($parts) == 2 && strlen($parts[1]) <= 2 && strlen($parts[0]) <= 3) {
-                // Kemungkinan desimal sederhana: 0.87 atau 123.45
-                $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
-            } else {
-                // Kemungkinan ribuan: 1.234.567
-                $jumlah_keuntungan = floatval(str_replace('.', '', $jumlah_keuntungan_raw));
-            }
-        } else {
-            // Hanya angka tanpa pemisah
-            $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
-        }
+        $jumlah_keuntungan = parseInputValuePHP($jumlah_keuntungan_raw);
     }
-    
-    $persentase_keuntungan = !empty($_POST['persentase_keuntungan']) ? floatval($_POST['persentase_keuntungan']) : null;
+
+    // Persentase: jika diisi manual, konversi ke desimal
+    $persentase_input = $_POST['persentase_keuntungan'] ?? null;
+    $persentase_keuntungan = null;
+    if (!empty($persentase_input) && is_numeric($persentase_input)) {
+        $persentase_keuntungan = floatval($persentase_input) / 100; // input % → simpan sebagai desimal
+    }
+
     $tanggal_keuntungan = $_POST['tanggal_keuntungan'] ?? '';
     $sumber_keuntungan = $_POST['sumber_keuntungan'] ?? 'lainnya';
     $status = $_POST['status'] ?? 'realized';
 
-    // Validasi - izinkan keuntungan 0 (break even)
+    // Validasi
     if (empty($investasi_id) || empty($kategori_id) || empty($judul_keuntungan) || $jumlah_keuntungan < 0 || empty($tanggal_keuntungan)) {
-        $error = 'Semua field wajib diisi dengan benar. Jumlah keuntungan tidak boleh negatif.';
+        $error = 'Semua field wajib diisi. Jumlah keuntungan harus ≥ 0.';
     } else {
         try {
-            // Auto hitung persentase keuntungan jika belum diisi
+            // Auto-calculate persentase jika belum diisi
             if (is_null($persentase_keuntungan)) {
                 try {
-                    // Cek kolom yang tersedia di tabel investasi
-                    $amount_column = 'jumlah_investasi'; // default
-                    
-                    // Coba beberapa kemungkinan nama kolom
-                    $possible_columns = ['jumlah_investasi', 'jumlah', 'amount', 'nilai_investasi'];
-                    foreach ($possible_columns as $col) {
-                        try {
-                            $test_sql = "SELECT {$col} FROM investasi WHERE id = ? LIMIT 1";
-                            $test_stmt = $koneksi->prepare($test_sql);
-                            $test_stmt->execute([$investasi_id]);
-                            $amount_column = $col;
-                            break; // Jika berhasil, gunakan kolom ini
-                        } catch (Exception $e) {
-                            continue; // Coba kolom berikutnya
-                        }
-                    }
-                    
                     $sql_invest = "SELECT {$amount_column} as jumlah_investasi FROM investasi WHERE id = ?";
                     $stmt_invest = $koneksi->prepare($sql_invest);
                     $stmt_invest->execute([$investasi_id]);
                     $invest_data = $stmt_invest->fetch();
                     
                     if ($invest_data && $invest_data['jumlah_investasi'] > 0) {
-                        $persentase_keuntungan = round(($jumlah_keuntungan / $invest_data['jumlah_investasi']) * 100, 6);
+                        $persentase_keuntungan = $jumlah_keuntungan / $invest_data['jumlah_investasi']; // sudah desimal
                     }
                 } catch (Exception $e) {
-                    // Jika gagal mendapatkan data investasi, set persentase ke null
                     error_log("PERCENTAGE_CALC_ERROR: " . $e->getMessage());
-                    $persentase_keuntungan = null;
                 }
             }
             
+            // Simpan ke database
             $sql = "INSERT INTO keuntungan_investasi 
                         (investasi_id, kategori_id, judul_keuntungan, deskripsi, jumlah_keuntungan, persentase_keuntungan, tanggal_keuntungan, sumber_keuntungan, status) 
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
             $stmt = $koneksi->prepare($sql);
-            $stmt->execute([$investasi_id, $kategori_id, $judul_keuntungan, $deskripsi, $jumlah_keuntungan, $persentase_keuntungan, $tanggal_keuntungan, $sumber_keuntungan, $status]);
+            $stmt->execute([
+                $investasi_id,
+                $kategori_id,
+                $judul_keuntungan,
+                $deskripsi,
+                $jumlah_keuntungan,
+                $persentase_keuntungan,
+                $tanggal_keuntungan,
+                $sumber_keuntungan,
+                $status
+            ]);
 
-            // Redirect setelah sukses untuk reset form
-            $_SESSION['success'] = 'Keuntungan investasi berhasil ditambahkan!';
+            $_SESSION['success'] = 'Keuntungan berhasil ditambahkan!';
             header("Location: upload_keuntungan.php");
             exit;
         } catch (Exception $e) {
-            // Error handling aman - log detail error, tampilkan pesan singkat ke user
-            error_log("UPLOAD_KEUNTUNGAN_ERROR: " . $e->getMessage() . " | User ID: " . $_SESSION['user_id'] . " | Data: " . json_encode($_POST));
-            $error = 'Terjadi kesalahan sistem. Silakan coba lagi atau hubungi administrator.';
+            error_log("UPLOAD_KEUNTUNGAN_ERROR: " . $e->getMessage() . " | Data: " . json_encode($_POST));
+            $error = 'Gagal menyimpan data. Cek struktur database.';
         }
     }
 }
 
-// Ambil pesan sukses dari session (jika ada)
+// Ambil pesan sukses dari session
 if (isset($_SESSION['success'])) {
     $success = $_SESSION['success'];
     unset($_SESSION['success']);
 }
+
+// Fungsi parsing nilai (PHP)
+function parseInputValuePHP($value) {
+    $value = preg_replace('/[^\d\.\,]/', '', $value); // bersihkan
+    if (empty($value)) return 0;
+
+    $lastComma = strrpos($value, ',');
+    $lastDot = strrpos($value, '.');
+
+    if ($lastComma !== false && $lastDot !== false) {
+        if ($lastComma > $lastDot) {
+            return floatval(str_replace(['.', ','], ['', '.'], $value));
+        } else {
+            return floatval(str_replace(',', '', $value));
+        }
+    } elseif ($lastComma !== false) {
+        $parts = explode(',', $value);
+        if (count($parts) == 2 && strlen($parts[1]) <= 2) {
+            return floatval(str_replace(',', '.', $value));
+        } else {
+            return floatval(str_replace(',', '', $value));
+        }
+    } elseif ($lastDot !== false) {
+        $parts = explode('.', $value);
+        if (count($parts) == 2 && strlen($parts[1]) <= 2 && strlen($parts[0]) < 4) {
+            return floatval($value);
+        } else {
+            return floatval(str_replace('.', '', $value));
+        }
+    } else {
+        return floatval($value);
+    }
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -206,11 +189,6 @@ if (isset($_SESSION['success'])) {
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
         .header h1 {
             color: #2d3748;
             font-size: 28px;
@@ -226,10 +204,6 @@ if (isset($_SESSION['success'])) {
         .header p {
             color: #718096;
             font-size: 16px;
-        }
-
-        .form-container {
-            margin-top: 20px;
         }
 
         .alert {
@@ -308,99 +282,51 @@ if (isset($_SESSION['success'])) {
             display: block;
         }
 
-        .profit-types {
+        .profit-types, .status-types {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
             gap: 10px;
             margin-top: 10px;
         }
 
-        .profit-type {
+        .profit-types { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+        .status-types { grid-template-columns: 1fr 1fr; }
+
+        .profit-type, .status-type {
             background: rgba(255, 255, 255, 0.8);
             border: 2px solid #e2e8f0;
             border-radius: 10px;
             padding: 15px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
             position: relative;
         }
 
-        .profit-type:hover {
+        .profit-type:hover, .status-type:hover {
             border-color: #667eea;
             background: rgba(102, 126, 234, 0.05);
         }
 
-        .profit-type.selected {
+        .profit-type.selected, .status-type.selected {
             border-color: #667eea;
             background: rgba(102, 126, 234, 0.1);
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
         }
 
-        .profit-type input[type="radio"] {
+        .profit-type input, .status-type input {
             position: absolute;
             opacity: 0;
             width: 0;
-            height: 0;
         }
 
-        .profit-type i {
-            font-size: 20px;
-            color: #667eea;
-            display: block;
-            margin-bottom: 8px;
-        }
-
-        .profit-type span {
-            font-size: 12px;
-            color: #4a5568;
-            font-weight: 500;
-        }
-
-        .status-types {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .status-type {
-            background: rgba(255, 255, 255, 0.8);
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            position: relative;
-        }
-
-        .status-type:hover {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.05);
-        }
-
-        .status-type.selected {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .status-type input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .status-type i {
+        .profit-type i, .status-type i {
             font-size: 18px;
             color: #667eea;
             display: block;
             margin-bottom: 8px;
         }
 
-        .status-type span {
+        .profit-type span, .status-type span {
             font-size: 12px;
             color: #4a5568;
             font-weight: 500;
@@ -420,7 +346,6 @@ if (isset($_SESSION['success'])) {
             font-size: 14px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-decoration: none;
             display: inline-flex;
             align-items: center;
@@ -456,29 +381,16 @@ if (isset($_SESSION['success'])) {
         }
 
         @media (max-width: 768px) {
-            .container {
-                padding: 20px;
-                margin: 10px;
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .profit-types {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
+            .container { padding: 20px; margin: 10px; }
+            .header h1 { font-size: 24px; }
+            .form-actions { flex-direction: column; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-chart-line-up"></i> Tambah Keuntungan Investasi</h1>
+            <h1><i class="fas fa-chart-line-up"></i> Tambah Keuntungan</h1>
             <p>Catat keuntungan dari investasi Anda</p>
         </div>
 
@@ -501,7 +413,7 @@ if (isset($_SESSION['success'])) {
                     <select name="investasi_id" id="investasi_id" class="form-control" required>
                         <option value="">-- Pilih Investasi --</option>
                         <?php foreach ($investasi_list as $inv): ?>
-                            <option value="<?= $inv['id'] ?>" 
+                            <option value="<?= $inv['id'] ?>"
                                     data-kategori="<?= $inv['kategori_id'] ?>"
                                     data-nama-kategori="<?= htmlspecialchars($inv['nama_kategori']) ?>"
                                     data-jumlah="<?= $inv['jumlah_investasi'] ?>">
@@ -521,23 +433,24 @@ if (isset($_SESSION['success'])) {
 
                 <div class="form-group">
                     <label for="judul_keuntungan"><i class="fas fa-tag"></i> Judul Keuntungan</label>
-                    <input type="text" name="judul_keuntungan" id="judul_keuntungan" class="form-control" 
-                           placeholder="Contoh: Dividen Q1 2024, Capital Gain Saham BBCA" required>
+                    <input type="text" name="judul_keuntungan" id="judul_keuntungan" class="form-control"
+                           placeholder="Contoh: Dividen Q1, Capital Gain" required>
                 </div>
 
                 <div class="form-group">
                     <label for="jumlah_keuntungan"><i class="fas fa-money-bill"></i> Jumlah Keuntungan (Rp)</label>
-                    <input type="text" name="jumlah_keuntungan" id="jumlah_keuntungan" class="form-control" 
-                           placeholder="Contoh: 0.87, 1.500, 1500.50, 2.500.000,75" required>
+                    <input type="text" name="jumlah_keuntungan" id="jumlah_keuntungan" class="form-control"
+                           placeholder="Contoh: 0.82, 1.500,75, 10.000" required>
                     <small style="color: #718096; font-size: 12px; margin-top: 5px; display: block;">
-                        <i class="fas fa-info-circle"></i> Support format: 0.87 | 1.500 | 1,500.50 | 2.500.000,75
+                        <i class="fas fa-info-circle"></i> Dukung desimal: 0.82, 1.000,75
                     </small>
                 </div>
 
                 <div class="form-group">
-                    <label for="persentase_keuntungan"><i class="fas fa-percentage"></i> Persentase Keuntungan (%)</label>
-                    <input type="number" name="persentase_keuntungan" id="persentase_keuntungan" class="form-control" 
-                           step="0.01" placeholder="Akan dihitung otomatis">
+                    <label for="persentase_keuntungan"><i class="fas fa-percentage"></i> Persentase (%)</label>
+                    <input type="number" name="persentase_keuntungan" id="persentase_keuntungan"
+                           class="form-control" step="0.000001" min="0"
+                           placeholder="Opsional — akan dihitung otomatis">
                 </div>
 
                 <div class="form-group">
@@ -582,19 +495,19 @@ if (isset($_SESSION['success'])) {
                         <div class="status-type" onclick="selectStatusType(this, 'unrealized')">
                             <input type="radio" name="status" value="unrealized">
                             <i class="fas fa-clock"></i>
-                            <span>Belum Direalisasi</span>
+                            <span>Belum</span>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label for="deskripsi"><i class="fas fa-align-left"></i> Deskripsi (Opsional)</label>
-                    <textarea name="deskripsi" id="deskripsi" class="form-control" rows="3" 
-                              placeholder="Tambahkan catatan atau deskripsi keuntungan..."></textarea>
+                    <textarea name="deskripsi" id="deskripsi" class="form-control" rows="3"
+                              placeholder="Catatan tambahan..."></textarea>
                 </div>
 
                 <div class="form-actions">
-                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan Keuntungan</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Simpan</button>
                     <a href="../dashboard.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Kembali</a>
                 </div>
             </form>
@@ -602,236 +515,114 @@ if (isset($_SESSION['success'])) {
     </div>
 
     <script>
-        // Investment selection
-        document.getElementById('investasi_id').addEventListener('change', function() {
+        // Update info investasi
+        document.getElementById('investasi_id').addEventListener('change', function () {
             const selected = this.options[this.selectedIndex];
-            const investmentInfo = document.getElementById('investmentInfo');
-            const categorySpan = document.getElementById('selectedCategory');
-            const categoryInput = document.getElementById('kategori_id');
-            const amountSpan = document.getElementById('selectedAmount');
-            const amountContainer = document.getElementById('investmentAmountContainer');
-
+            const info = document.getElementById('investmentInfo');
             if (selected.value) {
-                categorySpan.textContent = selected.dataset.namaKategori;
-                categoryInput.value = selected.dataset.kategori;
+                document.getElementById('selectedCategory').textContent = selected.dataset.namaKategori;
+                document.getElementById('kategori_id').value = selected.dataset.kategori;
                 
-                const investmentAmount = parseFloat(selected.dataset.jumlah || 0);
-                if (investmentAmount > 0) {
-                    amountSpan.textContent = investmentAmount.toLocaleString('id-ID');
-                    amountContainer.style.display = 'block';
+                const amount = parseFloat(selected.dataset.jumlah || 0);
+                if (amount > 0) {
+                    document.getElementById('selectedAmount').textContent = amount.toLocaleString('id-ID');
+                    document.getElementById('investmentAmountContainer').style.display = 'block';
                 } else {
-                    amountContainer.style.display = 'none';
+                    document.getElementById('investmentAmountContainer').style.display = 'none';
                 }
-                
-                investmentInfo.classList.add('show');
-                
-                // Auto calculate percentage if profit amount is already filled
-                const profitAmount = document.getElementById('jumlah_keuntungan').value;
-                if (profitAmount) {
-                    calculatePercentage();
-                }
-            } else {
-                investmentInfo.classList.remove('show');
-                categoryInput.value = '';
-                amountSpan.textContent = '';
-            }
-        });
-
-        // Profit type selection
-        function selectProfitType(element, value) {
-            document.querySelectorAll('.profit-type').forEach(type => type.classList.remove('selected'));
-            element.classList.add('selected');
-            element.querySelector('input').checked = true;
-        }
-
-        // Status type selection
-        function selectStatusType(element, value) {
-            document.querySelectorAll('.status-type').forEach(type => type.classList.remove('selected'));
-            element.classList.add('selected');
-            element.querySelector('input').checked = true;
-        }
-
-        // Format number input with decimal support
-        document.getElementById('jumlah_keuntungan').addEventListener('input', function() {
-            let value = this.value;
-            
-            // Jangan format jika user sedang mengetik desimal
-            if (value.endsWith('.') || value.endsWith(',') || 
-                (value.includes('.') && value.split('.').pop().length <= 2) ||
-                (value.includes(',') && value.split(',').pop().length <= 2)) {
-                // Biarkan user mengetik, hanya hitung persentase
+                info.classList.add('show');
                 calculatePercentage();
-                return;
-            }
-            
-            // Format hanya untuk tampilan jika sudah lengkap
-            calculatePercentage();
-        });
-
-        // Format angka ketika user selesai mengetik (onblur)
-        document.getElementById('jumlah_keuntungan').addEventListener('blur', function() {
-            let value = this.value.trim();
-            if (!value || value === '0') return;
-            
-            // Parse value menggunakan logika yang sama dengan PHP
-            let numericValue = parseInputValue(value);
-            
-            if (numericValue > 0) {
-                // Jangan format ulang - biarkan user input apa adanya untuk presisi
-                // Hanya pastikan formatnya konsisten
-                if (numericValue < 1) {
-                    // Untuk nilai < 1, pertahankan format desimal user
-                    if (value.includes(',')) {
-                        // User pakai koma, pertahankan format Indonesia
-                        this.value = numericValue.toString().replace('.', ',');
-                    } else {
-                        // User pakai titik, pertahankan format international
-                        this.value = numericValue.toString();
-                    }
-                } else {
-                    // Untuk nilai >= 1, biarkan user menentukan formatnya sendiri
-                    // Hanya pastikan nilai numeriknya benar
-                    this.value = value; // Pertahankan format asli user
-                }
-            }
-        });
-
-        // Function untuk parse berbagai format input
-        function parseInputValue(value) {
-            // Remove Rp dan spasi
-            value = value.replace(/Rp\s*/gi, '').trim();
-            
-            let lastComma = value.lastIndexOf(',');
-            let lastDot = value.lastIndexOf('.');
-            
-            if (lastComma !== -1 && lastDot !== -1) {
-                // Ada keduanya - yang terakhir adalah desimal
-                if (lastComma > lastDot) {
-                    // Format Indonesia: 1.234.567,89
-                    return parseFloat(value.replace(/\./g, '').replace(',', '.'));
-                } else {
-                    // Format International: 1,234,567.89
-                    return parseFloat(value.replace(/,/g, ''));
-                }
-            } else if (lastComma !== -1) {
-                // Hanya ada koma
-                let parts = value.split(',');
-                if (parts.length === 2 && parts[1].length <= 2) {
-                    // Kemungkinan desimal: 0,87 atau 1234,56
-                    return parseFloat(value.replace(',', '.'));
-                } else {
-                    // Kemungkinan ribuan: 1,234,567
-                    return parseFloat(value.replace(/,/g, ''));
-                }
-            } else if (lastDot !== -1) {
-                // Hanya ada titik
-                let parts = value.split('.');
-                if (parts.length === 2 && parts[1].length <= 2 && parts[0].length <= 3) {
-                    // Kemungkinan desimal sederhana: 0.87 atau 123.45
-                    return parseFloat(value);
-                } else {
-                    // Kemungkinan ribuan: 1.234.567
-                    return parseFloat(value.replace(/\./g, ''));
-                }
             } else {
-                // Hanya angka tanpa pemisah
+                info.classList.remove('show');
+            }
+        });
+
+        function selectProfitType(el, value) {
+            document.querySelectorAll('.profit-type').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            el.querySelector('input').checked = true;
+        }
+
+        function selectStatusType(el, value) {
+            document.querySelectorAll('.status-type').forEach(e => e.classList.remove('selected'));
+            el.classList.add('selected');
+            el.querySelector('input').checked = true;
+        }
+
+        function parseInputValue(value) {
+            value = value.replace(/Rp\s*/gi, '').trim();
+            if (!value) return 0;
+
+            const lastComma = value.lastIndexOf(',');
+            const lastDot = value.lastIndexOf('.');
+
+            if (lastComma > lastDot && lastComma !== -1) {
+                return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+            } else if (lastDot > lastComma && lastDot !== -1) {
+                return parseFloat(value.replace(/,/g, ''));
+            } else if (lastComma !== -1) {
+                return parseFloat(value.replace(',', '.'));
+            } else if (lastDot !== -1) {
+                return parseFloat(value);
+            } else {
                 return parseFloat(value);
             }
         }
 
-        // Function untuk format mata uang Indonesia
-        function formatIndonesianCurrency(value) {
-            let parts = value.toFixed(2).split('.');
-            let integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-            
-            if (parts[1] === '00') {
-                return integerPart;
-            } else {
-                return integerPart + ',' + parts[1];
-            }
-        }
-
-        // Auto calculate percentage
         function calculatePercentage() {
-            const investasiSelect = document.getElementById('investasi_id');
+            const select = document.getElementById('investasi_id');
             const profitInput = document.getElementById('jumlah_keuntungan');
-            const percentageInput = document.getElementById('persentase_keuntungan');
-            
-            const selectedOption = investasiSelect.options[investasiSelect.selectedIndex];
-            const jumlahInvestasi = parseFloat(selectedOption?.dataset.jumlah || 0);
-            
-            if (jumlahInvestasi > 0 && profitInput.value.trim()) {
-                // Parse profit value menggunakan function yang sama
-                const profitValue = parseInputValue(profitInput.value.trim());
-                
-                if (profitValue >= 0) { // Allow zero profit
-                    // Hitung persentase dengan presisi tinggi
-                    const percentage = (profitValue / jumlahInvestasi * 100);
-                    
-                    // Format persentase dengan presisi yang sesuai
-                    if (percentage < 0.01) {
-                        // Untuk persentase sangat kecil, gunakan 6 desimal
-                        percentageInput.value = percentage.toFixed(6);
-                    } else if (percentage < 1) {
-                        // Untuk persentase < 1%, gunakan 4 desimal
-                        percentageInput.value = percentage.toFixed(4);
-                    } else {
-                        // Untuk persentase >= 1%, gunakan 2 desimal
-                        percentageInput.value = percentage.toFixed(2);
-                    }
-                }
-            } else if (profitInput.value.trim()) {
-                // Jika tidak ada data jumlah investasi, biarkan user mengisi manual
-                percentageInput.placeholder = 'Silakan isi manual (data investasi tidak tersedia)';
+            const pctInput = document.getElementById('persentase_keuntungan');
+            if (pctInput.value.trim() !== '') return; // jangan timpa
+
+            const selected = select.options[select.selectedIndex];
+            const amount = parseFloat(selected?.dataset.jumlah || 0);
+            const profitRaw = profitInput.value.trim();
+            if (!profitRaw || amount <= 0) return;
+
+            const profit = parseInputValue(profitRaw);
+            if (profit >= 0) {
+                const percentage = (profit / amount) * 100;
+                pctInput.value = percentage < 0.01 
+                    ? percentage.toFixed(6) 
+                    : (percentage < 1 ? percentage.toFixed(4) : percentage.toFixed(2));
             }
         }
 
-        // Set today as default date
-        document.addEventListener('DOMContentLoaded', function() {
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('tanggal_keuntungan').value = today;
-            
-            // Initialize selected states
-            const investasiSelect = document.getElementById('investasi_id');
-            if (investasiSelect.value) {
-                investasiSelect.dispatchEvent(new Event('change'));
+        document.getElementById('jumlah_keuntungan').addEventListener('input', calculatePercentage);
+        document.getElementById('jumlah_keuntungan').addEventListener('blur', function () {
+            const val = this.value.trim();
+            if (val && !isNaN(parseInputValue(val))) {
+                // Valid, biarkan
             }
-            
-            const checkedRadio = document.querySelector('input[name="sumber_keuntungan"]:checked');
-            if (checkedRadio) checkedRadio.closest('.profit-type').classList.add('selected');
-            
-            const checkedStatus = document.querySelector('input[name="status"]:checked');
-            if (checkedStatus) checkedStatus.closest('.status-type').classList.add('selected');
         });
 
-        // Form validation before submit
-        document.getElementById('profitForm').addEventListener('submit', function(e) {
-            const profitInput = document.getElementById('jumlah_keuntungan');
-            const rawValue = profitInput.value.trim();
-            
-            if (!rawValue) {
+        document.getElementById('profitForm').addEventListener('submit', function (e) {
+            const raw = document.getElementById('jumlah_keuntungan').value.trim();
+            if (!raw) {
                 e.preventDefault();
-                alert('Jumlah keuntungan harus diisi');
-                profitInput.focus();
-                return false;
+                alert('Isi jumlah keuntungan');
+                return;
             }
-            
-            const profitValue = parseInputValue(rawValue);
-            
-            if (isNaN(profitValue) || profitValue < 0) {
+            const parsed = parseInputValue(raw);
+            if (isNaN(parsed) || parsed < 0) {
                 e.preventDefault();
-                alert('Jumlah keuntungan harus berupa angka yang valid (boleh 0 atau lebih)');
-                profitInput.focus();
-                return false;
+                alert('Jumlah tidak valid');
+                return;
             }
-            
-            // Set nilai yang akan dikirim dalam format decimal standar (gunakan titik)
-            // Jangan ubah tampilan, tapi pastikan nilai yang dikirim benar
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'hidden';
-            hiddenInput.name = 'jumlah_keuntungan_parsed';
-            hiddenInput.value = profitValue;
-            this.appendChild(hiddenInput);
+
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'jumlah_keuntungan_parsed';
+            hidden.value = parsed;
+            this.appendChild(hidden);
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tanggal_keuntungan').value = new Date().toISOString().split('T')[0];
+            if (document.getElementById('investasi_id').value) {
+                document.getElementById('investasi_id').dispatchEvent(new Event('change'));
+            }
         });
     </script>
 </body>
