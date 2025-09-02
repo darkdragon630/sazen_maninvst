@@ -1096,7 +1096,7 @@ body {
     box-shadow: var(--shadow-xl);
 }
 
-/* Quick Stats */
+/* Quick Stats (Profit Ratio, Performance YTD, dll) */
 .quick-stats {
     margin-top: var(--spacing-3xl);
     background: var(--white);
@@ -1192,6 +1192,158 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.5px;
     font-weight: 500;
+}
+
+/* Breakdown Keuntungan */
+.profit-breakdown {
+    margin-top: var(--spacing-3xl);
+    background: var(--white);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-2xl);
+    border: 1px solid var(--gray-200);
+}
+
+.section-title {
+    font-size: var(--font-size-2xl);
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.section-title i {
+    color: var(--primary-color);
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.breakdown-item {
+    background: var(--gradient-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.breakdown-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+.source-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-lg);
+    background: var(--primary-color);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-lg);
+}
+
+.source-name {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.breakdown-value {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--success-color);
+}
+
+.breakdown-count {
+    font-size: var(--font-size-sm);
+    color: var(--gray-500);
+}
+
+/* Catatan Keuntungan Terbaru */
+.recent-profits {
+    margin-top: var(--spacing-3xl);
+    background: var(--white);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-2xl);
+    border: 1px solid var(--gray-200);
+}
+
+.profits-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.profit-item {
+    padding: var(--spacing-lg);
+    background: var(--gray-50);
+    border-radius: var(--radius-xl);
+    border-left: 4px solid var(--success-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all var(--transition-fast);
+}
+
+.profit-item:hover {
+    background: var(--success-color);
+    color: var(--white);
+    transform: translateX(4px);
+}
+
+.profit-item:hover .profit-main h3,
+.profit-item:hover .profit-main p {
+    color: var(--white);
+}
+
+.profit-main h3 {
+    font-size: var(--font-size-lg);
+    font-weight: 600;
+    color: var(--gray-800);
+}
+
+.profit-main p {
+    font-size: var(--font-size-sm);
+    color: var(--gray-500);
+    margin: 0;
+}
+
+.profit-amount {
+    font-size: var(--font-size-xl);
+    font-weight: 800;
+    color: var(--success-color);
+}
+
+.profit-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--gray-500);
+}
+
+.source-badge {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--primary-color);
+    color: var(--white);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-xs);
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 /* Footer */
@@ -1424,6 +1576,10 @@ body {
     }
     
     .stats-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .breakdown-grid {
         grid-template-columns: 1fr;
     }
     
