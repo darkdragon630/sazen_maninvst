@@ -2,7 +2,7 @@
 session_start();
 require_once "../config.php";
 
-// Cek apakah user sudah login
+// Cek login
 if (!isset($_SESSION['user_id'])) {
     header("Location: auth.php");
     exit;
@@ -15,7 +15,7 @@ if (!$keuntungan_id) {
     exit;
 }
 
-// Ambil data keuntungan yang akan diedit
+// Ambil data keuntungan
 $sql_keuntungan = "SELECT k.*, i.judul_investasi, kat.nama_kategori 
                    FROM keuntungan_investasi k
                    JOIN investasi i ON k.investasi_id = i.id
@@ -30,7 +30,7 @@ if (!$keuntungan) {
     exit;
 }
 
-// Ambil data investasi untuk dropdown
+// Ambil data investasi
 $sql_investasi = "SELECT i.id, i.judul_investasi, k.nama_kategori, i.kategori_id 
                   FROM investasi i 
                   JOIN kategori k ON i.kategori_id = k.id 
@@ -41,21 +41,54 @@ $investasi_list = $stmt_investasi->fetchAll();
 $error = '';
 $success = '';
 
-// Proses form submission
+// Proses form
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $investasi_id = $_POST['investasi_id'];
     $kategori_id = $_POST['kategori_id'];
     $judul_keuntungan = trim($_POST['judul_keuntungan']);
     $deskripsi = trim($_POST['deskripsi']);
-    $jumlah_keuntungan = floatval($_POST['jumlah_keuntungan']);
+
+    // Parsing jumlah keuntungan
+    if (isset($_POST['jumlah_keuntungan_parsed']) && is_numeric($_POST['jumlah_keuntungan_parsed'])) {
+        $jumlah_keuntungan = floatval($_POST['jumlah_keuntungan_parsed']);
+    } else {
+        $jumlah_keuntungan_raw = trim($_POST['jumlah_keuntungan'] ?? '0');
+        $last_comma = strrpos($jumlah_keuntungan_raw, ',');
+        $last_dot = strrpos($jumlah_keuntungan_raw, '.');
+
+        if ($last_comma !== false && $last_dot !== false) {
+            if ($last_comma > $last_dot) {
+                $jumlah_keuntungan = floatval(str_replace(['.', ','], ['', '.'], $jumlah_keuntungan_raw));
+            } else {
+                $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
+            }
+        } elseif ($last_comma !== false) {
+            $parts = explode(',', $jumlah_keuntungan_raw);
+            if (count($parts) == 2 && strlen($parts[1]) <= 2) {
+                $jumlah_keuntungan = floatval(str_replace(',', '.', $jumlah_keuntungan_raw));
+            } else {
+                $jumlah_keuntungan = floatval(str_replace(',', '', $jumlah_keuntungan_raw));
+            }
+        } elseif ($last_dot !== false) {
+            $parts = explode('.', $jumlah_keuntungan_raw);
+            if (count($parts) == 2 && strlen($parts[1]) <= 2) {
+                $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
+            } else {
+                $jumlah_keuntungan = floatval(str_replace('.', '', $jumlah_keuntungan_raw));
+            }
+        } else {
+            $jumlah_keuntungan = floatval($jumlah_keuntungan_raw);
+        }
+    }
+
     $persentase_keuntungan = !empty($_POST['persentase_keuntungan']) ? floatval($_POST['persentase_keuntungan']) : null;
     $tanggal_keuntungan = $_POST['tanggal_keuntungan'];
     $sumber_keuntungan = $_POST['sumber_keuntungan'];
     $status = $_POST['status'];
 
     // Validasi
-    if (empty($investasi_id) || empty($kategori_id) || empty($judul_keuntungan) || empty($jumlah_keuntungan) || empty($tanggal_keuntungan)) {
-        $error = 'Semua field wajib diisi kecuali deskripsi dan persentase.';
+    if (empty($investasi_id) || empty($kategori_id) || empty($judul_keuntungan) || $jumlah_keuntungan < 0 || empty($tanggal_keuntungan)) {
+        $error = 'Semua field wajib diisi dengan benar.';
     } else {
         try {
             $sql_update = "UPDATE keuntungan_investasi SET 
@@ -113,13 +146,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             max-width: 800px;
             margin: 0 auto;
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: var(--radius-2xl);
+            box-shadow: var(--shadow-2xl);
             overflow: hidden;
         }
 
         .header {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
+            background: var(--gradient-warning);
             color: white;
             padding: 30px;
             text-align: center;
@@ -128,22 +161,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .header h1 {
             font-size: 2rem;
             margin-bottom: 10px;
+            font-weight: 700;
         }
 
         .header p {
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
         .current-data {
-            background: #fff3cd;
+            background: var(--warning-50);
             padding: 15px;
             margin: 20px 0;
-            border-radius: 10px;
-            border-left: 4px solid #ffc107;
+            border-radius: var(--radius-xl);
+            border-left: 4px solid var(--warning-500);
         }
 
         .current-data strong {
-            color: #856404;
+            color: var(--warning-700);
         }
 
         .form-container {
@@ -153,20 +187,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .alert {
             padding: 15px;
             margin-bottom: 20px;
-            border-radius: 10px;
+            border-radius: var(--radius-lg);
             font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .alert.error {
-            background: #fee;
-            color: #c33;
-            border-left: 4px solid #c33;
+            background: var(--error-50);
+            color: var(--error-700);
+            border-left: 4px solid var(--error-500);
         }
 
         .alert.success {
-            background: #efe;
-            color: #3c3;
-            border-left: 4px solid #3c3;
+            background: var(--success-50);
+            color: var(--success-700);
+            border-left: 4px solid var(--success-500);
         }
 
         .form-group {
@@ -177,22 +214,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #2c3e50;
+            color: var(--gray-800);
         }
 
         .form-control {
             width: 100%;
             padding: 12px 15px;
-            border: 2px solid #e1e8ed;
-            border-radius: 10px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-lg);
             font-size: 16px;
             transition: all 0.3s ease;
-            background: #f8f9fa;
+            background: var(--gray-50);
         }
 
         .form-control:focus {
             outline: none;
-            border-color: #f39c12;
+            border-color: var(--warning-500);
             background: white;
             box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.1);
         }
@@ -206,7 +243,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .btn {
             padding: 12px 30px;
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius-lg);
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
@@ -219,31 +256,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .btn-warning {
-            background: linear-gradient(135deg, #f39c12, #e67e22);
+            background: var(--gradient-warning);
             color: white;
         }
 
         .btn-warning:hover {
             transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(243, 156, 18, 0.3);
+            box-shadow: var(--shadow-xl);
         }
 
         .btn-secondary {
-            background: #6c757d;
+            background: var(--gray-500);
             color: white;
         }
 
         .btn-secondary:hover {
-            background: #5a6268;
+            background: var(--gray-600);
         }
 
         .btn-danger {
-            background: #dc3545;
+            background: var(--error-500);
             color: white;
         }
 
         .btn-danger:hover {
-            background: #c82333;
+            background: var(--error-600);
         }
 
         .form-actions {
@@ -253,9 +290,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .investment-info {
-            background: #f8f9fa;
+            background: var(--gray-50);
             padding: 15px;
-            border-radius: 10px;
+            border-radius: var(--radius-lg);
             margin-bottom: 20px;
             display: none;
         }
@@ -272,8 +309,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .profit-type {
             padding: 10px;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
+            border: 2px solid var(--gray-300);
+            border-radius: var(--radius-md);
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -285,20 +322,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .profit-type.selected {
-            border-color: #f39c12;
-            background: #fff8e1;
-            color: #f39c12;
+            border-color: var(--warning-500);
+            background: var(--warning-100);
+            color: var(--warning-700);
         }
 
         @media (max-width: 768px) {
             .form-row {
                 grid-template-columns: 1fr;
             }
-            
             .profit-types {
                 grid-template-columns: 1fr 1fr;
             }
-            
             .form-actions {
                 flex-direction: column;
             }
@@ -318,26 +353,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <strong>Investasi:</strong> <?= htmlspecialchars($keuntungan['judul_investasi']) ?><br>
                 <strong>Kategori:</strong> <?= htmlspecialchars($keuntungan['nama_kategori']) ?><br>
                 <strong>Keuntungan:</strong> <?= htmlspecialchars($keuntungan['judul_keuntungan']) ?><br>
-                <strong>Jumlah:</strong> Rp <?= number_format($keuntungan['jumlah_keuntungan'], 0, ',', '.') ?>
+                <strong>Jumlah:</strong> Rp <?= number_format($keuntungan['jumlah_keuntungan'], 2, ',', '.') ?>
             </div>
 
             <?php if ($error): ?>
                 <div class="alert error">
-                    <i class="fas fa-exclamation-triangle"></i> <?= $error ?>
+                    <i class="fas fa-exclamation-triangle"></i> <?= htmlspecialchars($error) ?>
                 </div>
             <?php endif; ?>
 
             <?php if ($success): ?>
                 <div class="alert success">
-                    <i class="fas fa-check-circle"></i> <?= $success ?>
+                    <i class="fas fa-check-circle"></i> <?= htmlspecialchars($success) ?>
                 </div>
             <?php endif; ?>
 
             <form method="POST" id="editProfitForm">
                 <div class="form-group">
-                    <label for="investasi_id">
-                        <i class="fas fa-briefcase"></i> Pilih Investasi
-                    </label>
+                    <label for="investasi_id"><i class="fas fa-briefcase"></i> Pilih Investasi</label>
                     <select name="investasi_id" id="investasi_id" class="form-control" required>
                         <option value="">-- Pilih Investasi --</option>
                         <?php foreach ($investasi_list as $inv): ?>
@@ -358,9 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
 
                 <div class="form-group">
-                    <label for="judul_keuntungan">
-                        <i class="fas fa-tag"></i> Judul Keuntungan
-                    </label>
+                    <label for="judul_keuntungan"><i class="fas fa-tag"></i> Judul Keuntungan</label>
                     <input type="text" name="judul_keuntungan" id="judul_keuntungan" 
                            class="form-control" placeholder="Contoh: Dividen Triwulan Q1 2024"
                            value="<?= htmlspecialchars($keuntungan['judul_keuntungan']) ?>" required>
@@ -368,19 +399,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="jumlah_keuntungan">
-                            <i class="fas fa-money-bill-wave"></i> Jumlah Keuntungan (Rp)
-                        </label>
-                        <input type="number" name="jumlah_keuntungan" id="jumlah_keuntungan" 
-                               class="form-control" step="0.01" min="0"
-                               placeholder="0"
-                               value="<?= $keuntungan['jumlah_keuntungan'] ?>" required>
+                        <label for="jumlah_keuntungan"><i class="fas fa-money-bill-wave"></i> Jumlah Keuntungan (Rp)</label>
+                        <input type="text" name="jumlah_keuntungan" id="jumlah_keuntungan" 
+                               class="form-control" 
+                               placeholder="Contoh: 0.87, 1.500, 1.500.50, 2.500.000,75"
+                               value="<?= number_format($keuntungan['jumlah_keuntungan'], 2, ',', '.') ?>" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="persentase_keuntungan">
-                            <i class="fas fa-percentage"></i> Persentase (%)
-                        </label>
+                        <label for="persentase_keuntungan"><i class="fas fa-percentage"></i> Persentase (%)</label>
                         <input type="number" name="persentase_keuntungan" id="persentase_keuntungan" 
                                class="form-control" step="0.01" min="0"
                                placeholder="Opsional"
@@ -389,52 +416,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
 
                 <div class="form-group">
-                    <label for="tanggal_keuntungan">
-                        <i class="fas fa-calendar-alt"></i> Tanggal Keuntungan
-                    </label>
+                    <label for="tanggal_keuntungan"><i class="fas fa-calendar-alt"></i> Tanggal Keuntungan</label>
                     <input type="date" name="tanggal_keuntungan" id="tanggal_keuntungan" 
                            class="form-control"
                            value="<?= $keuntungan['tanggal_keuntungan'] ?>" required>
                 </div>
 
                 <div class="form-group">
-                    <label>
-                        <i class="fas fa-layer-group"></i> Sumber Keuntungan
-                    </label>
+                    <label><i class="fas fa-layer-group"></i> Sumber Keuntungan</label>
                     <div class="profit-types">
-                        <div class="profit-type" onclick="selectProfitType(this, 'dividen')">
-                            <input type="radio" name="sumber_keuntungan" value="dividen" 
-                                   <?= $keuntungan['sumber_keuntungan'] == 'dividen' ? 'checked' : '' ?>>
-                            <i class="fas fa-coins"></i><br>Dividen
-                        </div>
-                        <div class="profit-type" onclick="selectProfitType(this, 'capital_gain')">
-                            <input type="radio" name="sumber_keuntungan" value="capital_gain"
-                                   <?= $keuntungan['sumber_keuntungan'] == 'capital_gain' ? 'checked' : '' ?>>
-                            <i class="fas fa-chart-line"></i><br>Capital Gain
-                        </div>
-                        <div class="profit-type" onclick="selectProfitType(this, 'bunga')">
-                            <input type="radio" name="sumber_keuntungan" value="bunga"
-                                   <?= $keuntungan['sumber_keuntungan'] == 'bunga' ? 'checked' : '' ?>>
-                            <i class="fas fa-percent"></i><br>Bunga
-                        </div>
-                        <div class="profit-type" onclick="selectProfitType(this, 'bonus')">
-                            <input type="radio" name="sumber_keuntungan" value="bonus"
-                                   <?= $keuntungan['sumber_keuntungan'] == 'bonus' ? 'checked' : '' ?>>
-                            <i class="fas fa-gift"></i><br>Bonus
-                        </div>
-                        <div class="profit-type" onclick="selectProfitType(this, 'lainnya')">
-                            <input type="radio" name="sumber_keuntungan" value="lainnya"
-                                   <?= $keuntungan['sumber_keuntungan'] == 'lainnya' ? 'checked' : '' ?>>
-                            <i class="fas fa-ellipsis-h"></i><br>Lainnya
-                        </div>
+                        <?php $sources = ['dividen', 'capital_gain', 'bunga', 'bonus', 'lainnya']; ?>
+                        <?php foreach ($sources as $src): ?>
+                            <div class="profit-type" onclick="selectProfitType(this, '<?= $src ?>')">
+                                <input type="radio" name="sumber_keuntungan" value="<?= $src ?>"
+                                       <?= $keuntungan['sumber_keuntungan'] == $src ? 'checked' : '' ?>>
+                                <i class="fas <?= $src == 'dividen' ? 'fa-coins' : 
+                                                ($src == 'capital_gain' ? 'fa-chart-line' : 
+                                                ($src == 'bunga' ? 'fa-percent' : 
+                                                ($src == 'bonus' ? 'fa-gift' : 'fa-ellipsis-h'))) ?>"></i><br>
+                                <?= ucfirst($src) ?>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="status">
-                            <i class="fas fa-flag"></i> Status
-                        </label>
+                        <label for="status"><i class="fas fa-flag"></i> Status</label>
                         <select name="status" id="status" class="form-control" required>
                             <option value="realized" <?= $keuntungan['status'] == 'realized' ? 'selected' : '' ?>>
                                 Sudah Direalisasi
@@ -448,9 +456,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
 
                 <div class="form-group">
-                    <label for="deskripsi">
-                        <i class="fas fa-file-alt"></i> Deskripsi (Opsional)
-                    </label>
+                    <label for="deskripsi"><i class="fas fa-file-alt"></i> Deskripsi (Opsional)</label>
                     <textarea name="deskripsi" id="deskripsi" class="form-control" rows="3"
                               placeholder="Deskripsi tambahan mengenai keuntungan ini..."><?= htmlspecialchars($keuntungan['deskripsi']) ?></textarea>
                 </div>
@@ -472,7 +478,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script>
-        // Handle investment selection
         document.getElementById('investasi_id').addEventListener('change', function() {
             const selected = this.options[this.selectedIndex];
             const investmentInfo = document.getElementById('investmentInfo');
@@ -492,25 +497,41 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         });
 
-        // Handle profit type selection
         function selectProfitType(element, value) {
-            // Remove selected class from all
             document.querySelectorAll('.profit-type').forEach(type => {
                 type.classList.remove('selected');
             });
-            
-            // Add selected class to clicked element
             element.classList.add('selected');
-            
-            // Check the radio button
             element.querySelector('input').checked = true;
         }
 
-        // Initialize selected profit type on page load
         document.addEventListener('DOMContentLoaded', function() {
             const checkedRadio = document.querySelector('input[name="sumber_keuntungan"]:checked');
             if (checkedRadio) {
                 checkedRadio.closest('.profit-type').classList.add('selected');
+            }
+        });
+
+        // Parsing input uang
+        document.getElementById('jumlah_keuntungan').addEventListener('blur', function() {
+            let val = this.value.replace(/[^0-9.,]/g, '');
+            if (val.includes(',')) {
+                val = val.replace(/\./g, '').replace(',', '.');
+            } else {
+                val = val.replace(/\./g, '');
+            }
+            this.value = parseFloat(val).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        });
+
+        document.getElementById('editProfitForm').addEventListener('submit', function(e) {
+            const raw = document.getElementById('jumlah_keuntungan').value;
+            const parsed = raw.replace(/\./g, '').replace(',', '.');
+            if (!isNaN(parsed)) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.name = 'jumlah_keuntungan_parsed';
+                hidden.value = parsed;
+                this.appendChild(hidden);
             }
         });
     </script>
