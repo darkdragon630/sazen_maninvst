@@ -2,7 +2,7 @@
 session_start();
 require_once "config.php";
 
-// Cek apakah user sudah login
+// Cek login
 if (!isset($_SESSION['user_id'])) {
     header("Location: admin/auth.php");
     exit;
@@ -11,7 +11,7 @@ if (!isset($_SESSION['user_id'])) {
 // Ambil data user
 $username = $_SESSION['username'];
 
-// Query untuk mengambil semua data investasi
+// Query untuk semua investasi
 $sql = "
     SELECT i.id, i.judul_investasi, i.deskripsi, i.jumlah, i.tanggal_investasi, k.nama_kategori
     FROM investasi i
@@ -21,7 +21,7 @@ $sql = "
 $stmt = $koneksi->query($sql);
 $investasi = $stmt->fetchAll();
 
-// Query untuk statistik dengan keuntungan
+// Statistik
 $sql_stats = "
     SELECT 
         COUNT(DISTINCT i.id) as total_investasi,
@@ -36,7 +36,7 @@ $sql_stats = "
 $stmt_stats = $koneksi->query($sql_stats);
 $stats = $stmt_stats->fetch();
 
-// Query untuk investasi per kategori dengan keuntungan
+// Statistik per kategori
 $sql_kategori = "
     SELECT 
         k.id as kategori_id,
@@ -55,7 +55,7 @@ $sql_kategori = "
 $stmt_kategori = $koneksi->query($sql_kategori);
 $kategori_stats = $stmt_kategori->fetchAll();
 
-// Query untuk keuntungan terbaru
+// Keuntungan terbaru
 $sql_keuntungan = "
     SELECT 
         ki.id,
@@ -76,7 +76,7 @@ $sql_keuntungan = "
 $stmt_keuntungan = $koneksi->query($sql_keuntungan);
 $keuntungan_list = $stmt_keuntungan->fetchAll();
 
-// Query untuk statistik keuntungan per sumber
+// Statistik per sumber keuntungan
 $sql_sumber = "
     SELECT 
         sumber_keuntungan,
@@ -89,7 +89,7 @@ $sql_sumber = "
 $stmt_sumber = $koneksi->query($sql_sumber);
 $sumber_stats = $stmt_sumber->fetchAll();
 
-// Proses logout
+// Logout
 if (isset($_POST['logout'])) {
     session_destroy();
     header("Location: admin/auth.php");
@@ -235,7 +235,7 @@ if (isset($_POST['logout'])) {
                     <div class="stat-content">
                         <div class="stat-label">Total Nilai</div>
                         <div class="stat-number" data-amount="<?= $stats['total_nilai'] ?>">
-                            Rp <?= number_format($stats['total_nilai'], 0, ',', '.') ?>
+                            Rp <?= number_format($stats['total_nilai'], 2, ',', '.') ?>
                         </div>
                         <div class="stat-sublabel">Investasi + Keuntungan</div>
                     </div>
@@ -243,7 +243,7 @@ if (isset($_POST['logout'])) {
                         <i class="fas fa-arrow-up"></i>
                         <span>
                             <?= $stats['total_investasi_nilai'] > 0 
-                                ? number_format(($stats['total_keuntungan'] / $stats['total_investasi_nilai']) * 100, 1) 
+                                ? number_format(($stats['total_keuntungan'] / $stats['total_investasi_nilai']) * 100, 2) 
                                 : '0' ?>%
                         </span>
                     </div>
@@ -297,7 +297,6 @@ if (isset($_POST['logout'])) {
 
         <!-- Profit Summary -->
         <?php if ($sumber_stats): 
-            // Mapping sumber keuntungan ke ikon
             $ikon_map = [
                 'dividen' => 'fa-coins',
                 'capital_gain' => 'fa-chart-line',
@@ -361,11 +360,11 @@ if (isset($_POST['logout'])) {
                             </div>
                             <div class="category-value">
                                 <div class="value-amount">
-                                    Rp <?= number_format($kat['total_nilai'], 0, ',', '.') ?>
+                                    Rp <?= number_format($kat['total_nilai'], 2, ',', '.') ?>
                                 </div>
                                 <div class="value-breakdown">
                                     <small>
-                                        Investasi: Rp <?= number_format($kat['total_investasi'], 0, ',', '.') ?><br>
+                                        Investasi: Rp <?= number_format($kat['total_investasi'], 2, ',', '.') ?><br>
                                         Keuntungan: Rp <?= number_format($kat['total_keuntungan'], 2, ',', '.') ?>
                                     </small>
                                 </div>
@@ -755,7 +754,7 @@ if (isset($_POST['logout'])) {
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
 
-        // AOS (Animate On Scroll)
+        // AOS
         document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 animateCounters();
