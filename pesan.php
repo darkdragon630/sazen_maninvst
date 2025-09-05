@@ -384,7 +384,7 @@
         // Decrypt functionality
         let attemptCount = 0;
         const maxAttempts = 5;
-        const correctCode = 'YWt1IHNlbGFsdSBtZW55dWthaSBtdSBkYWxhbSBkaWFtIHJpa2E='; // Base64 for "Termuka pesan tersembuyi"
+        const correctCode = '=E2apJHItFWakBSbhxWYkBSdtBSahtWd55WZtBSdsFGblNHI1tWY'; // Base64 for "Termuka pesan tersembuyi"
         
         function attemptDecrypt() {
             const input = document.getElementById('decryptCode');
