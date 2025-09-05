@@ -120,25 +120,46 @@
   </div>
 
   <script>
-    let attemptCount = 0;
+    const correctCode = "YWt1IHNlbGFsdSBtZW55dWthaSBtdSBkYWxhbSBkaWFtIHJpa2E=";
     const maxAttempts = 5;
-    const correctCode = "YWt1IHNlbGFsdSBtZW55dWthaSBtdSBkYWxhbSBkaWFtIHJpa2E="; // base64
+
+    // Ambil data dari localStorage
+    let log = JSON.parse(localStorage.getItem("decryptLog")) || {
+      attempts: 0,
+      fails: 0,
+      success: false
+    };
+
+    // Update tampilan awal
+    document.getElementById("attemptCount").textContent = log.attempts;
+    document.getElementById("failCount").textContent = log.fails;
+
+    if (log.success) {
+      document.getElementById("statusText").textContent = "✅ Sudah berhasil sebelumnya!";
+      document.getElementById("statusText").style.color = "#00ff41";
+    }
+
+    function saveLog() {
+      localStorage.setItem("decryptLog", JSON.stringify(log));
+    }
 
     function attemptDecrypt() {
       const input = document.getElementById("decryptCode").value.trim();
       const statusText = document.getElementById("statusText");
       const attemptCountEl = document.getElementById("attemptCount");
-      const failCount = document.getElementById("failCount");
+      const failCountEl = document.getElementById("failCount");
 
-      attemptCount++;
-      attemptCountEl.textContent = attemptCount;
+      log.attempts++;
+      attemptCountEl.textContent = log.attempts;
 
       if (input === correctCode) {
-        alert("🎉 Selamat! Anda menemukan pesan tersembunyi!");
+        log.success = true;
         statusText.textContent = "✅ BERHASIL - Pesan berhasil diungkap!";
         statusText.style.color = "#00ff41";
 
-        // tampilkan hasil decode base64
+        saveLog();
+
+        alert("🎉 Selamat! Anda menemukan pesan tersembunyi!");
         const decoded = atob(correctCode);
         setTimeout(() => {
           alert("📜 Isi pesan: " + decoded);
@@ -146,15 +167,18 @@
         }, 1000);
 
       } else {
+        log.fails++;
+        failCountEl.textContent = log.fails;
         statusText.textContent = "❌ Kode salah!";
         statusText.style.color = "#ff0000";
-        failCount.textContent = attemptCount;
 
-        if (attemptCount >= maxAttempts) {
+        if (log.attempts >= maxAttempts) {
           statusText.textContent = "🔒 TERKUNCI PERMANEN!";
           document.getElementById("decryptBtn").disabled = true;
           document.getElementById("decryptCode").disabled = true;
         }
+
+        saveLog();
       }
     }
   </script>
