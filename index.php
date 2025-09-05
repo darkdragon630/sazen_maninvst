@@ -544,7 +544,7 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
 
          document.querySelector("footer").addEventListener("dblclick", function() {
              alert("🎉 Selamat! Anda menemukan pesan tersembunyi.");
-             window.location.href = "pesan.html"; 
+             window.location.href = "pesan.php"; 
         });
         // Intersection Observer for animations
         const observer = new IntersectionObserver((entries) => {
