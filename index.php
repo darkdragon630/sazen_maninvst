@@ -542,6 +542,10 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
             animateCounters();
         }, 1000);
 
+         document.querySelector("footer").addEventListener("dblclick", function() {
+             alert("🎉 Selamat! Anda menemukan pesan tersembunyi.");
+             window.location.href = "pesan_tersembunyi.png"; 
+        });
         // Intersection Observer for animations
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
