@@ -19,11 +19,10 @@
       margin: 0 auto;
       text-align: center;
       position: relative;
-      padding: 0 clamp(10px, 2vw, 20px);
     }
     h1 {
       font-size: clamp(1.8em, 5vw, 2.5em);
-      margin-bottom: clamp(20px, 4vh, 30px);
+      margin-bottom: 20px;
       text-shadow: 0 0 10px #00ff41;
       animation: glow 2s ease-in-out infinite alternate;
     }
@@ -32,40 +31,20 @@
       to { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41; }
     }
     .noise-layer {
-      position: relative;
       width: min(90vw, 600px);
       height: min(60vw, 400px);
       margin: 0 auto;
-      background: #000;
       border: 2px solid #00ff41;
       box-shadow: 0 0 20px rgba(0, 255, 65, 0.3);
       border-radius: 10px;
       overflow: hidden;
+      position: relative;
     }
     .hidden-image {
-      position: absolute;
-      top: 0; left: 0;
       width: 100%; height: 100%;
       background: url('pesan_tersembunyi.png') no-repeat center;
-      background-size: contain;
-      opacity: 0.05;
-      z-index: 1;
-      filter: brightness(0.1) contrast(0.3);
-      mix-blend-mode: screen;
-    }
-    .warning {
-      margin-top: 20px;
-      padding: 15px;
-      background: rgba(0,0,0,0.8);
-      border: 1px solid #ff0000;
-      color: #ff4444;
-      border-radius: 10px;
-      box-shadow: 0 0 15px rgba(255,0,0,0.3);
-      backdrop-filter: blur(5px);
-    }
-    .warning h3 {
-      margin: 0 0 10px 0;
-      text-shadow: 0 0 5px #ff0000;
+      background-size: cover;
+      opacity: 0.3;
     }
     .decrypt-panel {
       margin-top: 20px;
@@ -95,6 +74,58 @@
       margin-top: 10px;
       font-size: 0.9em;
     }
+    /* Modal Popup */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #111;
+      border: 2px solid #00ff41;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      color: #00ff41;
+      box-shadow: 0 0 30px #00ff41;
+      animation: pop 0.5s ease;
+      max-width: 600px;
+    }
+    @keyframes pop {
+      from { transform: scale(0.5); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    #decodedMessage {
+      margin-top: 15px;
+      font-size: 1.1em;
+      white-space: pre-wrap;
+      min-height: 40px;
+    }
+    /* Animasi layar berguncang saat terkunci */
+    @keyframes shake {
+      0% { transform: translate(2px, 2px) rotate(0deg); }
+      10% { transform: translate(-2px, -4px) rotate(-1deg); }
+      20% { transform: translate(-6px, 0px) rotate(1deg); }
+      30% { transform: translate(6px, 4px) rotate(0deg); }
+      40% { transform: translate(2px, -2px) rotate(1deg); }
+      50% { transform: translate(-2px, 4px) rotate(-1deg); }
+      60% { transform: translate(-6px, 2px) rotate(0deg); }
+      70% { transform: translate(6px, 2px) rotate(-1deg); }
+      80% { transform: translate(-2px, -2px) rotate(1deg); }
+      90% { transform: translate(2px, 4px) rotate(0deg); }
+      100% { transform: translate(2px, -4px) rotate(-1deg); }
+    }
+    .locked {
+      animation: shake 0.5s;
+      animation-iteration-count: 3;
+      background: rgba(255,0,0,0.2);
+    }
   </style>
 </head>
 <body>
@@ -105,80 +136,76 @@
       <div class="hidden-image"></div>
     </div>
 
-    <div class="warning">
-      <h3>⚠️ AKSES TERBATAS ⚠️</h3>
-      <p>Masukkan kode dekripsi Base64 untuk membuka pesan tersembunyi.</p>
-    </div>
-
     <div class="decrypt-panel">
       <input type="text" id="decryptCode" placeholder="Masukkan kode Base64 di sini...">
       <br>
       <button id="decryptBtn" onclick="attemptDecrypt()">DEKRIPSI</button>
       <div class="status" id="statusText">MENUNGGU INPUT</div>
-      <div class="status">Percobaan: <span id="attemptCount">0</span> | Gagal: <span id="failCount">0</span></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal" id="successModal">
+    <div class="modal-content">
+      <h2>🎉 Selamat!</h2>
+      <p>Anda menemukan pesan tersembunyi!</p>
+      <p id="decodedMessage"></p>
     </div>
   </div>
 
   <script>
     const correctCode = "YWt1IHNlbGFsdSBtZW55dWthaSBtdSBkYWxhbSBkaWFtIHJpa2E=";
-    const maxAttempts = 5;
-
-    // Ambil data dari localStorage
-    let log = JSON.parse(localStorage.getItem("decryptLog")) || {
-      attempts: 0,
-      fails: 0,
-      success: false
-    };
-
-    // Update tampilan awal
-    document.getElementById("attemptCount").textContent = log.attempts;
-    document.getElementById("failCount").textContent = log.fails;
-
-    if (log.success) {
-      document.getElementById("statusText").textContent = "✅ Sudah berhasil sebelumnya!";
-      document.getElementById("statusText").style.color = "#00ff41";
-    }
-
-    function saveLog() {
-      localStorage.setItem("decryptLog", JSON.stringify(log));
-    }
+    const maxAttempts = 3;
+    let log = { attempts: 0 };
 
     function attemptDecrypt() {
       const input = document.getElementById("decryptCode").value.trim();
       const statusText = document.getElementById("statusText");
-      const attemptCountEl = document.getElementById("attemptCount");
-      const failCountEl = document.getElementById("failCount");
+      const panel = document.querySelector(".decrypt-panel");
 
-      log.attempts++;
-      attemptCountEl.textContent = log.attempts;
+      // Jika sudah terkunci
+      if (log.attempts >= maxAttempts) {
+        statusText.textContent = "🔒 TERKUNCI PERMANEN!";
+        statusText.style.color = "#ff0000";
+        document.getElementById("decryptBtn").disabled = true;
+        document.getElementById("decryptCode").disabled = true;
+        panel.classList.add("locked");
+        return;
+      }
 
       if (input === correctCode) {
-        log.success = true;
         statusText.textContent = "✅ BERHASIL - Pesan berhasil diungkap!";
         statusText.style.color = "#00ff41";
 
-        saveLog();
+        // Efek typewriter
+        const decoded = "📜 Isi pesan: " + atob(correctCode);
+        let i = 0;
+        const speed = 80;
+        const msgEl = document.getElementById("decodedMessage");
+        msgEl.textContent = "";
+        document.getElementById("successModal").style.display = "flex";
 
-        alert("🎉 Selamat! Anda menemukan pesan tersembunyi!");
-        const decoded = atob(correctCode);
-        setTimeout(() => {
-          alert("📜 Isi pesan: " + decoded);
-          window.location.href = "pesan_tersembunyi.png";
-        }, 1000);
+        function typeWriter() {
+          if (i < decoded.length) {
+            msgEl.textContent += decoded.charAt(i);
+            i++;
+            setTimeout(typeWriter, speed);
+          }
+        }
+        typeWriter();
 
       } else {
-        log.fails++;
-        failCountEl.textContent = log.fails;
-        statusText.textContent = "❌ Kode salah!";
-        statusText.style.color = "#ff0000";
-
+        log.attempts++;
         if (log.attempts >= maxAttempts) {
           statusText.textContent = "🔒 TERKUNCI PERMANEN!";
+          statusText.style.color = "#ff0000";
           document.getElementById("decryptBtn").disabled = true;
           document.getElementById("decryptCode").disabled = true;
+          panel.classList.add("locked");
+        } else {
+          statusText.textContent = `❌ Kode salah! Percobaan ${log.attempts}/${maxAttempts}`;
+          statusText.style.color = "#ff0000";
         }
-
-        saveLog();
       }
     }
   </script>
