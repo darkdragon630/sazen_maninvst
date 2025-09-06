@@ -59,7 +59,7 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: url('pesan_tesembunyi.png') no-repeat center / contain;
+    background: url('pesan_tersembunyi.png') no-repeat center / contain;
     opacity: 0.05;
     z-index: 1;
     filter: brightness(0.1) contrast(0.3);
