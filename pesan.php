@@ -600,6 +600,7 @@
         window.addEventListener('load', () => {
             createMatrixRain();
             preventInspection();
+            initializeDecryptPanel(); // Initialize UI based on saved state
         });
 
         window.addEventListener('resize', handleResize);
