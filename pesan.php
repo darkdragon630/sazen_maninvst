@@ -377,35 +377,35 @@
     </div>
 
     <script>
-        // Matrix rain effect with responsive character count
-        function createMatrixRain() {
-            const container = document.getElementById('matrixRain');
-            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-            
-            const screenWidth = window.innerWidth;
-            const columnCount = Math.max(10, Math.min(30, Math.floor(screenWidth / 30)));
-            
-            container.innerHTML = '';
-            
-            for (let i = 0; i < columnCount; i++) {
-                const column = document.createElement('div');
-                column.className = 'matrix-column';
-                column.style.left = (Math.random() * 100) + '%';
-                column.style.animationDuration = (Math.random() * 3 + 2) + 's';
-                column.style.animationDelay = Math.random() * 2 + 's';
-                
-                const textLength = Math.max(10, Math.min(25, Math.floor(window.innerHeight / 25)));
-                let text = '';
-                for (let j = 0; j < textLength; j++) {
-                    text += chars.charAt(Math.floor(Math.random() * chars.length)) + '\n';
-                }
-                column.textContent = text;
-                
-                container.appendChild(column);
-            }
-        }
+       // Matrix rain effect with responsive character count
+function createMatrixRain() {
+    const container = document.getElementById('matrixRain');
+    const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
 
-        // Ambil attemptCount dari localStorage atau mulai dari 0
+    const screenWidth = window.innerWidth;
+    const columnCount = Math.max(10, Math.min(30, Math.floor(screenWidth / 30)));
+
+    container.innerHTML = '';
+
+    for (let i = 0; i < columnCount; i++) {
+        const column = document.createElement('div');
+        column.className = 'matrix-column';
+        column.style.left = (Math.random() * 100) + '%';
+        column.style.animationDuration = (Math.random() * 3 + 2) + 's';
+        column.style.animationDelay = Math.random() * 2 + 's';
+
+        const textLength = Math.max(10, Math.min(25, Math.floor(window.innerHeight / 25)));
+        let text = '';
+        for (let j = 0; j < textLength; j++) {
+            text += chars.charAt(Math.floor(Math.random() * chars.length)) + '\n';
+        }
+        column.textContent = text;
+
+        container.appendChild(column);
+    }
+}
+
+// Ambil attemptCount dari localStorage atau mulai dari 0
 let attemptCount = parseInt(localStorage.getItem('attemptCount')) || 0;
 const maxAttempts = 5;
 const correctCode = 'Holo Kamu! Aku Selalu Menyukai Mu';
@@ -419,7 +419,6 @@ function initializeDecryptPanel() {
     const statusText = document.getElementById('statusText');
     const failCount = document.getElementById('failCount');
     const decryptPanel = document.querySelector('.decrypt-panel');
-    const hiddenImage = document.querySelector('.hidden-image');
 
     attemptCountEl.textContent = attemptCount;
 
@@ -456,7 +455,6 @@ function attemptDecrypt() {
         return;
     }
 
-    // Jika sudah terkunci, jangan proses lagi
     if (attemptCount >= maxAttempts) {
         return;
     }
@@ -471,7 +469,6 @@ function attemptDecrypt() {
     statusText.style.color = '#ffaa00';
 
     setTimeout(() => {
-        // Cek kode benar pertama
         if (inputCode === correctCode) {
             statusText.textContent = 'BERHASIL - AKSES DIBERIKAN!';
             statusText.style.color = '#00ff41';
@@ -490,9 +487,11 @@ function attemptDecrypt() {
             failCount.textContent = 'BERHASIL!';
             failCount.style.color = '#00ff41';
 
+            // Pastikan simpan attemptCount saat berhasil
+            localStorage.setItem('attemptCount', attemptCount);
+
             showSuccessMessage();
 
-        // Cek kode rahasia base64 (decode dulu)
         } else if (inputCode === secretCode) {
             statusText.textContent = 'PESAN RAHASIA TERBACA!';
             statusText.style.color = '#00ff41';
@@ -500,12 +499,15 @@ function attemptDecrypt() {
             failCount.textContent = 'BERHASIL!';
             failCount.style.color = '#00ff41';
 
-            showSecretMessage();
-
             btn.textContent = '✅ BERHASIL';
             btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
             input.disabled = true;
             btn.disabled = true;
+
+            // Simpan juga attemptCount saat berhasil
+            localStorage.setItem('attemptCount', attemptCount);
+
+            showSecretMessage();
 
         } else {
             statusText.textContent = 'KODE SALAH - AKSES DITOLAK!';
@@ -570,19 +572,136 @@ function showSecretMessage() {
     }, 6000);
 }
 
-// Panggil initialize saat halaman load
+// Fungsi menampilkan pesan sukses
+function showSuccessMessage() {
+    const successMsg = document.createElement('div');
+    successMsg.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, rgba(0,255,65,0.95), rgba(0,200,50,0.95));
+            color: #000;
+            padding: 25px 35px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 0 40px rgba(0,255,65,0.8);
+            text-align: center;
+            border: 3px solid #00ff41;
+            max-width: 90vw;
+        ">
+            🎉 PESAN TERSEMBUNYI BERHASIL DIUNGKAP! 🎉<br>
+            <div style="font-size: 0.9em; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                "Holo Kamu! Aku Selalu Menyukai Mu"
+            </div>
+            <div style="font-size: 0.7em; margin-top: 10px; color: #333;">
+                Sekarang kamu bisa melihat pesan tersembunyinya! 💚
+            </div>
+        </div>
+    `;
+    document.body.appendChild(successMsg);
+
+    setTimeout(() => {
+        successMsg.remove();
+    }, 6000);
+}
+
+// Fungsi menampilkan error input kosong
+function showInputError(message) {
+    const statusText = document.getElementById('statusText');
+    const originalText = statusText.textContent;
+    const originalColor = statusText.style.color;
+
+    statusText.textContent = message;
+    statusText.style.color = '#ff0000';
+
+    setTimeout(() => {
+        statusText.textContent = originalText;
+        statusText.style.color = originalColor;
+    }, 2000);
+}
+
+// Fungsi menampilkan peringatan sisa percobaan
+function showAttemptWarning(remaining) {
+    const statusText = document.getElementById('statusText');
+    statusText.textContent = `TERSISA ${remaining} PERCOBAAN!`;
+    statusText.style.color = '#ffaa00';
+
+    setTimeout(() => {
+        statusText.textContent = 'MENUNGGU INPUT';
+        statusText.style.color = '#ffaa00';
+    }, 3000);
+}
+
+// Fungsi efek lockdown saat percobaan habis
+function showLockdownEffect() {
+    const noiseLayer = document.querySelector('.noise-layer');
+    const lockdownOverlay = document.createElement('div');
+    lockdownOverlay.innerHTML = `
+        <div style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ff0000;
+            font-size: 2em;
+            font-weight: bold;
+            text-shadow: 0 0 10px #ff0000;
+            z-index: 100;
+            animation: glitch 0.5s infinite;
+        ">
+            🚨 LOCKDOWN 🚨
+        </div>
+    `;
+    noiseLayer.appendChild(lockdownOverlay);
+}
+
+// Fungsi mencegah inspeksi sederhana
+function preventInspection() {
+    document.addEventListener('contextmenu', e => e.preventDefault());
+
+    document.addEventListener('keydown', function(e) {
+        if (
+            e.key === 'F12' ||
+            (e.ctrlKey && e.shiftKey && ['I', 'C', 'J'].includes(e.key.toUpperCase())) ||
+            (e.ctrlKey && e.key.toLowerCase() === 'u')
+        ) {
+            e.preventDefault();
+            const warning = document.querySelector('.warning');
+            warning.style.animation = 'glitch 0.5s ease-in-out 3';
+            return false;
+        }
+    });
+}
+
+// Fungsi handle resize untuk regenerasi matrix rain
+function handleResize() {
+    createMatrixRain();
+}
+
+// Event listener saat halaman load
 window.addEventListener('load', () => {
     createMatrixRain();
     preventInspection();
     initializeDecryptPanel();
 });
 
-        window.addEventListener('resize', handleResize);
-        
-        const regenerateInterval = window.innerWidth < 768 ? 15000 : 10000;
-        setInterval(() => {
-            createMatrixRain();
-        }, regenerateInterval);
+// Event listener saat resize
+window.addEventListener('resize', handleResize);
+
+// Interval regenerasi matrix rain
+const regenerateInterval = window.innerWidth < 768 ? 15000 : 10000;
+setInterval(() => {
+    createMatrixRain();
+}, regenerateInterval);
     </script>
 </body>
 </html>
