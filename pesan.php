@@ -405,203 +405,177 @@
             }
         }
 
-        // Decrypt functionality
-        let attemptCount = 0;
-        const maxAttempts = 5;
-        const correctCode = 'Holo Kamu! Aku Selalu Menyukai Mu';
-        
-        function attemptDecrypt() {
-            const input = document.getElementById('decryptCode');
-            const btn = document.getElementById('decryptBtn');
-            const statusText = document.getElementById('statusText');
-            const attemptCountEl = document.getElementById('attemptCount');
-            const failCount = document.getElementById('failCount');
-            const decryptPanel = document.querySelector('.decrypt-panel');
-            const hiddenImage = document.querySelector('.hidden-image');
-            
-            const inputCode = input.value.trim();
-            
-            if (!inputCode) {
-                showInputError('Masukkan kode dekripsi!');
-                return;
-            }
-            
-            attemptCount++;
-            attemptCountEl.textContent = attemptCount;
-            
+        // Ambil attemptCount dari localStorage atau mulai dari 0
+let attemptCount = parseInt(localStorage.getItem('attemptCount')) || 0;
+const maxAttempts = 5;
+const correctCode = 'Holo Kamu! Aku Selalu Menyukai Mu';
+const secretCode = 'YWt1IHNlbGFsdSBtZW55dWthaSBtdSBkYWxhbSBkaWFtIHJpa2E='; // base64 kode rahasia
+
+// Fungsi untuk inisialisasi UI berdasarkan attemptCount yang tersimpan
+function initializeDecryptPanel() {
+    const attemptCountEl = document.getElementById('attemptCount');
+    const input = document.getElementById('decryptCode');
+    const btn = document.getElementById('decryptBtn');
+    const statusText = document.getElementById('statusText');
+    const failCount = document.getElementById('failCount');
+    const decryptPanel = document.querySelector('.decrypt-panel');
+    const hiddenImage = document.querySelector('.hidden-image');
+
+    attemptCountEl.textContent = attemptCount;
+
+    if (attemptCount >= maxAttempts) {
+        btn.disabled = true;
+        input.disabled = true;
+        statusText.textContent = 'SISTEM TERKUNCI - TERLALU BANYAK PERCOBAAN!';
+        statusText.style.color = '#ff0000';
+        failCount.textContent = `GAGAL (${attemptCount}x)`;
+        failCount.style.color = '#ff0000';
+        showLockdownEffect();
+    } else {
+        statusText.textContent = 'MENUNGGU INPUT';
+        statusText.style.color = '#ffaa00';
+        failCount.textContent = 'BELUM MENCOBA';
+        failCount.style.color = '#ff0000';
+    }
+}
+
+// Fungsi utama untuk mencoba dekripsi
+function attemptDecrypt() {
+    const input = document.getElementById('decryptCode');
+    const btn = document.getElementById('decryptBtn');
+    const statusText = document.getElementById('statusText');
+    const attemptCountEl = document.getElementById('attemptCount');
+    const failCount = document.getElementById('failCount');
+    const decryptPanel = document.querySelector('.decrypt-panel');
+    const hiddenImage = document.querySelector('.hidden-image');
+
+    const inputCode = input.value.trim();
+
+    if (!inputCode) {
+        showInputError('Masukkan kode dekripsi!');
+        return;
+    }
+
+    // Jika sudah terkunci, jangan proses lagi
+    if (attemptCount >= maxAttempts) {
+        return;
+    }
+
+    attemptCount++;
+    localStorage.setItem('attemptCount', attemptCount); // simpan ke localStorage
+    attemptCountEl.textContent = attemptCount;
+
+    btn.disabled = true;
+    btn.textContent = 'MEMPROSES...';
+    statusText.textContent = 'MEMVERIFIKASI KODE...';
+    statusText.style.color = '#ffaa00';
+
+    setTimeout(() => {
+        // Cek kode benar pertama
+        if (inputCode === correctCode) {
+            statusText.textContent = 'BERHASIL - AKSES DIBERIKAN!';
+            statusText.style.color = '#00ff41';
+
+            decryptPanel.classList.add('success-reveal');
+            hiddenImage.classList.add('revealed-image');
+
+            setTimeout(() => {
+                document.querySelector('.static-noise').style.opacity = '0.3';
+                document.querySelector('.matrix-rain').style.opacity = '0.2';
+            }, 500);
+
+            btn.textContent = '✅ BERHASIL';
+            btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
+            input.disabled = true;
+            failCount.textContent = 'BERHASIL!';
+            failCount.style.color = '#00ff41';
+
+            showSuccessMessage();
+
+        // Cek kode rahasia base64 (decode dulu)
+        } else if (inputCode === secretCode) {
+            statusText.textContent = 'PESAN RAHASIA TERBACA!';
+            statusText.style.color = '#00ff41';
+
+            failCount.textContent = 'BERHASIL!';
+            failCount.style.color = '#00ff41';
+
+            showSecretMessage();
+
+            btn.textContent = '✅ BERHASIL';
+            btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
+            input.disabled = true;
             btn.disabled = true;
-            btn.textContent = 'MEMPROSES...';
-            statusText.textContent = 'MEMVERIFIKASI KODE...';
-            statusText.style.color = '#ffaa00';
-            
-            setTimeout(() => {
-                if (inputCode === correctCode) {
-                    statusText.textContent = 'BERHASIL - AKSES DIBERIKAN!';
-                    statusText.style.color = '#00ff41';
-                    
-                    decryptPanel.classList.add('success-reveal');
-                    hiddenImage.classList.add('revealed-image');
-                    
-                    setTimeout(() => {
-                        document.querySelector('.static-noise').style.opacity = '0.3';
-                        document.querySelector('.matrix-rain').style.opacity = '0.2';
-                    }, 500);
-                    
-                    btn.textContent = '✅ BERHASIL';
-                    btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
-                    input.disabled = true;
-                    failCount.textContent = 'BERHASIL!';
-                    failCount.style.color = '#00ff41';
-                    
-                    showSuccessMessage();
-                    
-                } else {
-                    statusText.textContent = 'KODE SALAH - AKSES DITOLAK!';
-                    statusText.style.color = '#ff0000';
-                    failCount.textContent = `GAGAL (${attemptCount}x)`;
-                    
-                    decryptPanel.classList.add('failed-attempt');
-                    setTimeout(() => decryptPanel.classList.remove('failed-attempt'), 500);
-                    
-                    if (attemptCount >= maxAttempts) {
-                        btn.textContent = '🔒 TERKUNCI';
-                        btn.disabled = true;
-                        input.disabled = true;
-                        statusText.textContent = 'SISTEM TERKUNCI - TERLALU BANYAK PERCOBAAN!';
-                        showLockdownEffect();
-                    } else {
-                        btn.textContent = 'DEKRIPSI';
-                        btn.disabled = false;
-                        const remaining = maxAttempts - attemptCount;
-                        showAttemptWarning(remaining);
-                    }
-                }
-                
-                input.value = '';
-            }, 1500);
-        }
-        
-        function showInputError(message) {
-            const statusText = document.getElementById('statusText');
-            const originalText = statusText.textContent;
-            const originalColor = statusText.style.color;
-            
-            statusText.textContent = message;
+
+        } else {
+            statusText.textContent = 'KODE SALAH - AKSES DITOLAK!';
             statusText.style.color = '#ff0000';
-            
-            setTimeout(() => {
-                statusText.textContent = originalText;
-                statusText.style.color = originalColor;
-            }, 2000);
-        }
-        
-        function showSuccessMessage() {
-            const successMsg = document.createElement('div');
-            successMsg.innerHTML = `
-                <div style="
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: linear-gradient(45deg, rgba(0,255,65,0.95), rgba(0,200,50,0.95));
-                    color: #000;
-                    padding: 25px 35px;
-                    border-radius: 15px;
-                    font-size: 1.2em;
-                    font-weight: bold;
-                    z-index: 1000;
-                    box-shadow: 0 0 40px rgba(0,255,65,0.8);
-                    text-align: center;
-                    border: 3px solid #00ff41;
-                    max-width: 90vw;
-                ">
-                    🎉 PESAN TERSEMBUNYI BERHASIL DIUNGKAP! 🎉<br>
-                    <div style="font-size: 0.9em; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
-                        "Holo Kamu! Aku Selalu Menyukai Mu"
-                    </div>
-                    <div style="font-size: 0.7em; margin-top: 10px; color: #333;">
-                        Sekarang kamu bisa melihat pesan tersembunyinya! 💚
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(successMsg);
-            
-            setTimeout(() => {
-                successMsg.remove();
-            }, 6000);
-        }
-        
-        function showAttemptWarning(remaining) {
-            const statusText = document.getElementById('statusText');
-            statusText.textContent = `TERSISA ${remaining} PERCOBAAN!`;
-            statusText.style.color = '#ffaa00';
-            
-            setTimeout(() => {
-                statusText.textContent = 'MENUNGGU INPUT';
-                statusText.style.color = '#ffaa00';
-            }, 3000);
-        }
-        
-        function showLockdownEffect() {
-            const noiseLayer = document.querySelector('.noise-layer');
-            const lockdownOverlay = document.createElement('div');
-            lockdownOverlay.innerHTML = `
-                <div style="
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(255,0,0,0.3);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    color: #ff0000;
-                    font-size: 2em;
-                    font-weight: bold;
-                    text-shadow: 0 0 10px #ff0000;
-                    z-index: 100;
-                    animation: glitch 0.5s infinite;
-                ">
-                    🚨 LOCKDOWN 🚨
-                </div>
-            `;
-            noiseLayer.appendChild(lockdownOverlay);
-        }
-        
-        // Allow Enter key to submit
-        document.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && document.activeElement.id === 'decryptCode') {
-                attemptDecrypt();
+            failCount.textContent = `GAGAL (${attemptCount}x)`;
+
+            decryptPanel.classList.add('failed-attempt');
+            setTimeout(() => decryptPanel.classList.remove('failed-attempt'), 500);
+
+            if (attemptCount >= maxAttempts) {
+                btn.textContent = '🔒 TERKUNCI';
+                btn.disabled = true;
+                input.disabled = true;
+                statusText.textContent = 'SISTEM TERKUNCI - TERLALU BANYAK PERCOBAAN!';
+                showLockdownEffect();
+            } else {
+                btn.textContent = 'DEKRIPSI';
+                btn.disabled = false;
+                const remaining = maxAttempts - attemptCount;
+                showAttemptWarning(remaining);
             }
-        });
-        
-        // Enhanced security measures (simplified for demo)
-        function preventInspection() {
-            document.addEventListener('contextmenu', e => e.preventDefault());
-            
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'F12' || 
-                    (e.ctrlKey && e.shiftKey && ['I', 'C', 'J'].includes(e.key)) ||
-                    (e.ctrlKey && e.key === 'u')) {
-                    e.preventDefault();
-                    const warning = document.querySelector('.warning');
-                    warning.style.animation = 'glitch 0.5s ease-in-out 3';
-                    return false;
-                }
-            });
-        }
-        
-        function handleResize() {
-            createMatrixRain();
         }
 
-        // Initialize everything
-        window.addEventListener('load', () => {
-            createMatrixRain();
-            preventInspection();
-            initializeDecryptPanel(); // Initialize UI based on saved state
-        });
+        input.value = '';
+    }, 1500);
+}
+
+// Fungsi menampilkan pesan rahasia khusus
+function showSecretMessage() {
+    const secretMsg = document.createElement('div');
+    secretMsg.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, rgba(0,255,65,0.95), rgba(0,200,50,0.95));
+            color: #000;
+            padding: 25px 35px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+            z-index: 1000;
+            box-shadow: 0 0 40px rgba(0,255,65,0.8);
+            text-align: center;
+            border: 3px solid #00ff41;
+            max-width: 90vw;
+        ">
+            🔓 PESAN RAHASIA TERBACA! 🔓<br>
+            <div style="font-size: 0.9em; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                "aku selalu menyukai mu dalam diam rika"
+            </div>
+            <div style="font-size: 0.7em; margin-top: 10px; color: #333;">
+                Selamat kamu menemukan pesan rahasia tersembunyi! 💚
+            </div>
+        </div>
+    `;
+    document.body.appendChild(secretMsg);
+
+    setTimeout(() => {
+        secretMsg.remove();
+    }, 6000);
+}
+
+// Panggil initialize saat halaman load
+window.addEventListener('load', () => {
+    createMatrixRain();
+    preventInspection();
+    initializeDecryptPanel();
+});
 
         window.addEventListener('resize', handleResize);
         
