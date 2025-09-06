@@ -55,7 +55,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxwYXR0ZXJuIGlkPSJoaWRkZW4tcGF0dGVybiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj4KICAgICAgPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDAxMTAwIi8+CiAgICAgIDxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjE1IiBmaWxsPSIjMDAyMjAwIiBvcGFjaXR5PSIwLjMiLz4KICAgIDwvcGF0dGVybj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNoaWRkZW4tcGF0dGVybikiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjMwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwNDQwMCIgb3BhY2l0eT0iMC4yIj7wn5ODPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjMDA2NjAwIiBvcGFjaXR5PSIwLjMiPlBFU0FOIFRFUlNFTUJVTllJPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNzAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDA1NTAwIiBvcGFjaXR5PSIwLjI1Ij5Ib2xvIEthdSEgQWt1IFNlbGFsdSBNZW55dWthaSBNdTwvdGV4dD4KPC9zdmc+') no-repeat center;
+            background: url('pesan_tesembunyi.png') no-repeat center;
             background-size: contain;
             opacity: 0.05;
             z-index: 1;
