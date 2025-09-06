@@ -55,25 +55,19 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: url('pesan_tersembunyi.png') no-repeat center;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxwYXR0ZXJuIGlkPSJoaWRkZW4tcGF0dGVybiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj4KICAgICAgPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDAxMTAwIi8+CiAgICAgIDxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjE1IiBmaWxsPSIjMDAyMjAwIiBvcGFjaXR5PSIwLjMiLz4KICAgIDwvcGF0dGVybj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNoaWRkZW4tcGF0dGVybikiLz4KICA8dGV4dCB4PSI1MCUiIHk9IjMwJSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZm9udC1zaXplPSIyNCIgZmlsbD0iIzAwNDQwMCIgb3BhY2l0eT0iMC4yIj7wn5ODPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE4IiBmaWxsPSIjMDA2NjAwIiBvcGFjaXR5PSIwLjMiPlBFU0FOIFRFUlNFTUJVTllJPC90ZXh0PgogIDx0ZXh0IHg9IjUwJSIgeT0iNzAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjMDA1NTAwIiBvcGFjaXR5PSIwLjI1Ij5Ib2xvIEthdSEgQWt1IFNlbGFsdSBNZW55dWthaSBNdTwvdGV4dD4KPC9zdmc+') no-repeat center;
             background-size: contain;
             opacity: 0.05;
             z-index: 1;
             filter: brightness(0.1) contrast(0.3);
             mix-blend-mode: screen;
+            transition: all 2s ease;
         }
 
-        /* Fallback if image doesn't load */
-        .hidden-image::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8ZGVmcz4KICAgIDxwYXR0ZXJuIGlkPSJoaWRkZW4tcGF0dGVybiIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIj4KICAgICAgPHJlY3Qgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBmaWxsPSIjMDAxMTAwIi8+CiAgICAgIDxjaXJjbGUgY3g9IjIwIiBjeT0iMjAiIHI9IjE1IiBmaWxsPSIjMDAyMjAwIiBvcGFjaXR5PSIwLjMiLz4KICAgIDwvcGF0dGVybj4KICA8L2RlZnM+CiAgPHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNoaWRkZW4tcGF0dGVybikiLz4KICA8Y2lyY2xlIGN4PSI1MCUiIGN5PSI1MCUiIHI9IjE1JSIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjMDAzMzAwIiBzdHJva2Utd2lkdGg9IjIiIG9wYWNpdHk9IjAuMTUiLz4KICA8Y2lyY2xlIGN4PSI0MyUiIGN5PSI0MCUiIHI9IjMlIiBmaWxsPSIjMDA0NDAwIiBvcGFjaXR5PSIwLjIiLz4KICA8Y2lyY2xlIGN4PSI1NyUiIGN5PSI0MCUiIHI9IjMlIiBmaWxsPSIjMDA0NDAwIiBvcGFjaXR5PSIwLjIiLz4KICA8ZWxsaXBzZSBjeD0iNTAlIiBjeT0iNDclIiByeD0iMiUiIHJ5PSIzJSIgZmlsbD0iIzAwNTUwMCIgb3BhY2l0eT0iMC4xNSIvPgogIDxwYXRoIGQ9Ik0gNDAlIDU4JSBRIDQ5JSA3MCUgNjAlIDU4JSIgc3Ryb2tlPSIjMDA0NDAwIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIG9wYWNpdHk9IjAuMiIvPgo8L3N2Zz4=') no-repeat center;
-            background-size: cover;
-            opacity: 0.03;
+        .hidden-image.revealed-image {
+            opacity: 0.8;
+            filter: brightness(1) contrast(1);
+            mix-blend-mode: normal;
         }
 
         .noise {
@@ -84,6 +78,7 @@
             height: 100%;
             z-index: 2;
             pointer-events: none;
+            transition: opacity 2s ease;
         }
 
         .static-noise {
@@ -139,6 +134,128 @@
             to { top: 100%; }
         }
 
+        .decrypt-panel {
+            margin-top: clamp(20px, 4vh, 30px);
+            padding: clamp(15px, 3vw, 20px);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00ff41;
+            color: #00ff41;
+            border-radius: clamp(5px, 1vw, 10px);
+            box-shadow: 0 0 clamp(10px, 2vw, 15px) rgba(0, 255, 65, 0.3);
+            backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
+        }
+
+        .decrypt-panel.success-reveal {
+            border-color: #00ff41;
+            background: rgba(0, 50, 0, 0.9);
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
+        }
+
+        .decrypt-panel.failed-attempt {
+            border-color: #ff0000;
+            background: rgba(50, 0, 0, 0.9);
+            animation: shake 0.5s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .decrypt-panel h3 {
+            font-size: clamp(1.1em, 3.5vw, 1.4em);
+            margin: 0 0 clamp(15px, 3vh, 20px) 0;
+            text-shadow: 0 0 5px #00ff41;
+        }
+
+        .input-group {
+            margin-bottom: clamp(15px, 3vh, 20px);
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: clamp(8px, 2vh, 10px);
+            font-size: clamp(0.9em, 2.5vw, 1em);
+            color: #ffaa00;
+        }
+
+        #decryptCode {
+            width: 100%;
+            padding: clamp(10px, 2.5vw, 15px);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid #00ff41;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: clamp(0.9em, 2.5vw, 1em);
+            border-radius: clamp(3px, 0.5vw, 5px);
+            box-sizing: border-box;
+        }
+
+        #decryptCode:focus {
+            outline: none;
+            border-color: #ffaa00;
+            box-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
+        }
+
+        #decryptCode:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        #decryptBtn {
+            width: 100%;
+            padding: clamp(12px, 3vw, 15px);
+            background: linear-gradient(45deg, #00ff41, #00cc33);
+            border: none;
+            color: #000;
+            font-family: 'Courier New', monospace;
+            font-size: clamp(0.9em, 2.5vw, 1.1em);
+            font-weight: bold;
+            border-radius: clamp(3px, 0.5vw, 5px);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        #decryptBtn:hover:not(:disabled) {
+            background: linear-gradient(45deg, #00cc33, #00ff41);
+            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+        }
+
+        #decryptBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .status-display {
+            margin-top: clamp(15px, 3vh, 20px);
+            padding: clamp(10px, 2vw, 15px);
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #333;
+            border-radius: clamp(3px, 0.5vw, 5px);
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: clamp(5px, 1vh, 8px) 0;
+            font-size: clamp(0.8em, 2vw, 0.9em);
+        }
+
+        .status-label {
+            color: #888;
+        }
+
+        .status-value {
+            font-weight: bold;
+        }
+
+        #statusText {
+            color: #ffaa00;
+        }
+
         .warning {
             margin-top: clamp(20px, 4vh, 30px);
             padding: clamp(15px, 3vw, 20px);
@@ -162,17 +279,6 @@
             line-height: 1.4;
         }
 
-        .decrypt-attempts {
-            margin-top: clamp(15px, 3vh, 20px);
-            font-size: clamp(0.7em, 2vw, 0.9em);
-            color: #888;
-        }
-
-        .decrypt-attempts p {
-            font-size: inherit;
-            margin: clamp(4px, 1vh, 8px) 0;
-        }
-
         .glitch-text {
             position: relative;
             display: inline-block;
@@ -188,7 +294,7 @@
             80% { transform: translate(2px, -2px); }
         }
 
-        /* Advanced responsive breakpoints */
+        /* Responsive breakpoints */
         @media (max-width: 768px) {
             body {
                 padding: clamp(8px, 2vw, 15px);
@@ -218,110 +324,10 @@
                 height: min(80vw, 300px);
                 border-radius: 5px;
             }
-            
-            .warning {
-                border-radius: 5px;
-            }
-            
-            .glitch-text {
-                display: block;
-                margin-top: clamp(8px, 2vh, 15px);
-            }
 
             .matrix-column {
                 font-size: clamp(6px, 1.2vw, 10px);
                 line-height: clamp(6px, 1.2vw, 10px);
-            }
-        }
-
-        @media (max-width: 320px) {
-            .noise-layer {
-                height: min(85vw, 250px);
-            }
-            
-            .warning p {
-                font-size: clamp(0.7em, 2.2vw, 0.9em);
-            }
-        }
-
-        @media (max-height: 600px) {
-            .noise-layer {
-                max-height: 45vh;
-                height: min(50vw, 300px);
-            }
-            
-            h1 {
-                margin-bottom: clamp(15px, 3vh, 25px);
-            }
-        }
-
-        @media (max-height: 500px) {
-            body {
-                padding: clamp(5px, 1vh, 15px);
-            }
-            
-            .noise-layer {
-                max-height: 40vh;
-                height: min(45vw, 250px);
-            }
-            
-            .warning {
-                margin-top: clamp(10px, 2vh, 20px);
-                padding: clamp(10px, 2vh, 15px);
-            }
-        }
-
-        /* Landscape orientation optimizations */
-        @media (orientation: landscape) and (max-height: 500px) {
-            h1 {
-                font-size: clamp(1.4em, 4vw, 2em);
-                margin-bottom: clamp(10px, 2vh, 15px);
-            }
-            
-            .noise-layer {
-                height: min(35vw, 200px);
-                max-height: 35vh;
-            }
-            
-            .warning {
-                margin-top: clamp(10px, 2vh, 15px);
-            }
-        }
-
-        /* Ultra-wide screen support */
-        @media (min-width: 1200px) {
-            .container {
-                max-width: 1000px;
-            }
-            
-            .noise-layer {
-                width: min(70vw, 700px);
-                height: min(45vw, 450px);
-            }
-        }
-
-        /* High DPI displays */
-        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
-            .hidden-image {
-                image-rendering: crisp-edges;
-            }
-        }
-
-        /* Reduced motion preferences */
-        @media (prefers-reduced-motion: reduce) {
-            .glow,
-            .staticNoise,
-            .matrixFall,
-            .glitch {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-            }
-        }
-
-        /* Dark mode support */
-        @media (prefers-color-scheme: light) {
-            body {
-                background: linear-gradient(45deg, #2a2a3e, #26314e, #1f4470);
             }
         }
     </style>
@@ -338,15 +344,35 @@
             </div>
         </div>
         
+        <div class="decrypt-panel">
+            <h3>🔑 PANEL DEKRIPSI</h3>
+            <div class="input-group">
+                <label for="decryptCode">Masukkan Kode Dekripsi:</label>
+                <input type="text" id="decryptCode" placeholder="Ketik kode rahasia di sini..." maxlength="100">
+            </div>
+            <button id="decryptBtn" onclick="attemptDecrypt()">DEKRIPSI</button>
+            
+            <div class="status-display">
+                <div class="status-row">
+                    <span class="status-label">Status:</span>
+                    <span class="status-value" id="statusText">MENUNGGU INPUT</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Percobaan:</span>
+                    <span class="status-value"><span id="attemptCount">0</span>/5</span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Hasil:</span>
+                    <span class="status-value" id="failCount" style="color: #ff0000;">BELUM MENCOBA</span>
+                </div>
+            </div>
+        </div>
+        
         <div class="warning">
             <h3>⚠️ AKSES TERBATAS ⚠️</h3>
             <p>Gambar tersembunyi di dalam noise layer ini menggunakan enkripsi visual tingkat tinggi.</p>
             <p class="glitch-text">TIDAK DAPAT DI-REVEAL TANPA KUNCI DEKRIPSI</p>
-            <div class="decrypt-attempts">
-                <p>Percobaan dekripsi: <span style="color: #ff0000;">GAGAL</span></p>
-                <p>Status: <span style="color: #ff0000;">TERKUNCI PERMANEN</span></p>
-                <p>Target: <span style="color: #ffaa00;">pesan_tersembunyi.png</span></p>
-            </div>
+            <p><small><strong>Petunjuk:</strong> Kode rahasia tersembunyi dalam pesan yang sudah kamu baca... 🤔</small></p>
         </div>
     </div>
 
@@ -356,11 +382,10 @@
             const container = document.getElementById('matrixRain');
             const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
             
-            // Responsive column count based on screen width
             const screenWidth = window.innerWidth;
             const columnCount = Math.max(10, Math.min(30, Math.floor(screenWidth / 30)));
             
-            container.innerHTML = ''; // Clear existing columns
+            container.innerHTML = '';
             
             for (let i = 0; i < columnCount; i++) {
                 const column = document.createElement('div');
@@ -369,7 +394,6 @@
                 column.style.animationDuration = (Math.random() * 3 + 2) + 's';
                 column.style.animationDelay = Math.random() * 2 + 's';
                 
-                // Responsive text length
                 const textLength = Math.max(10, Math.min(25, Math.floor(window.innerHeight / 25)));
                 let text = '';
                 for (let j = 0; j < textLength; j++) {
@@ -384,7 +408,7 @@
         // Decrypt functionality
         let attemptCount = 0;
         const maxAttempts = 5;
-        const correctCode = ' YWt1IHNlbGFsdSBtZW55dWthaSBtdSBkYWxhbSBkaWFtIHJpa2E='; // Base64 for "Termuka pesan tersembuyi"
+        const correctCode = 'Holo Kamu! Aku Selalu Menyukai Mu';
         
         function attemptDecrypt() {
             const input = document.getElementById('decryptCode');
@@ -394,7 +418,6 @@
             const failCount = document.getElementById('failCount');
             const decryptPanel = document.querySelector('.decrypt-panel');
             const hiddenImage = document.querySelector('.hidden-image');
-            const noiseLayer = document.querySelector('.noise-layer');
             
             const inputCode = input.value.trim();
             
@@ -406,7 +429,6 @@
             attemptCount++;
             attemptCountEl.textContent = attemptCount;
             
-            // Disable button during processing
             btn.disabled = true;
             btn.textContent = 'MEMPROSES...';
             statusText.textContent = 'MEMVERIFIKASI KODE...';
@@ -414,14 +436,12 @@
             
             setTimeout(() => {
                 if (inputCode === correctCode) {
-                    // Success - reveal the image
                     statusText.textContent = 'BERHASIL - AKSES DIBERIKAN!';
                     statusText.style.color = '#00ff41';
                     
                     decryptPanel.classList.add('success-reveal');
                     hiddenImage.classList.add('revealed-image');
                     
-                    // Hide noise layers gradually
                     setTimeout(() => {
                         document.querySelector('.static-noise').style.opacity = '0.3';
                         document.querySelector('.matrix-rain').style.opacity = '0.2';
@@ -430,12 +450,12 @@
                     btn.textContent = '✅ BERHASIL';
                     btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
                     input.disabled = true;
+                    failCount.textContent = 'BERHASIL!';
+                    failCount.style.color = '#00ff41';
                     
-                    // Show success message
                     showSuccessMessage();
                     
                 } else {
-                    // Failed attempt
                     statusText.textContent = 'KODE SALAH - AKSES DITOLAK!';
                     statusText.style.color = '#ff0000';
                     failCount.textContent = `GAGAL (${attemptCount}x)`;
@@ -444,26 +464,21 @@
                     setTimeout(() => decryptPanel.classList.remove('failed-attempt'), 500);
                     
                     if (attemptCount >= maxAttempts) {
-                        // Lock the system
                         btn.textContent = '🔒 TERKUNCI';
                         btn.disabled = true;
                         input.disabled = true;
                         statusText.textContent = 'SISTEM TERKUNCI - TERLALU BANYAK PERCOBAAN!';
-                        
-                        // Show lockdown effect
                         showLockdownEffect();
                     } else {
                         btn.textContent = 'DEKRIPSI';
                         btn.disabled = false;
-                        
-                        // Show remaining attempts
                         const remaining = maxAttempts - attemptCount;
                         showAttemptWarning(remaining);
                     }
                 }
                 
                 input.value = '';
-            }, 1500); // Simulate processing time
+            }, 1500);
         }
         
         function showInputError(message) {
@@ -481,7 +496,6 @@
         }
         
         function showSuccessMessage() {
-            const container = document.querySelector('.container');
             const successMsg = document.createElement('div');
             successMsg.innerHTML = `
                 <div style="
@@ -489,33 +503,36 @@
                     top: 50%;
                     left: 50%;
                     transform: translate(-50%, -50%);
-                    background: linear-gradient(45deg, rgba(0,255,65,0.9), rgba(0,200,50,0.9));
+                    background: linear-gradient(45deg, rgba(0,255,65,0.95), rgba(0,200,50,0.95));
                     color: #000;
-                    padding: 20px 30px;
-                    border-radius: 10px;
+                    padding: 25px 35px;
+                    border-radius: 15px;
                     font-size: 1.2em;
                     font-weight: bold;
                     z-index: 1000;
-                    box-shadow: 0 0 30px rgba(0,255,65,0.8);
+                    box-shadow: 0 0 40px rgba(0,255,65,0.8);
                     text-align: center;
-                    border: 2px solid #00ff41;
+                    border: 3px solid #00ff41;
+                    max-width: 90vw;
                 ">
                     🎉 PESAN TERSEMBUNYI BERHASIL DIUNGKAP! 🎉<br>
-                    <small style="font-size: 0.8em; margin-top: 10px; display: block;">
-                        Kode yang benar: "${atob(correctCode)}"
-                    </small>
+                    <div style="font-size: 0.9em; margin-top: 15px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+                        "Holo Kamu! Aku Selalu Menyukai Mu"
+                    </div>
+                    <div style="font-size: 0.7em; margin-top: 10px; color: #333;">
+                        Sekarang kamu bisa melihat pesan tersembunyinya! 💚
+                    </div>
                 </div>
             `;
             document.body.appendChild(successMsg);
             
             setTimeout(() => {
                 successMsg.remove();
-            }, 5000);
+            }, 6000);
         }
         
         function showAttemptWarning(remaining) {
             const statusText = document.getElementById('statusText');
-            const temp = statusText.textContent;
             statusText.textContent = `TERSISA ${remaining} PERCOBAAN!`;
             statusText.style.color = '#ffaa00';
             
@@ -559,58 +576,22 @@
             }
         });
         
-        // Enhanced security measures
+        // Enhanced security measures (simplified for demo)
         function preventInspection() {
-            // Prevent right-click
-            document.addEventListener('contextmenu', e => {
-                e.preventDefault();
-                return false;
-            });
-
-            // Prevent common developer shortcuts
+            document.addEventListener('contextmenu', e => e.preventDefault());
+            
             document.addEventListener('keydown', function(e) {
-                // F12, Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+U, Ctrl+Shift+J
                 if (e.key === 'F12' || 
                     (e.ctrlKey && e.shiftKey && ['I', 'C', 'J'].includes(e.key)) ||
                     (e.ctrlKey && e.key === 'u')) {
                     e.preventDefault();
-                    showWarning();
+                    const warning = document.querySelector('.warning');
+                    warning.style.animation = 'glitch 0.5s ease-in-out 3';
                     return false;
                 }
             });
-
-            // Detect DevTools
-            let devtools = {open: false};
-            setInterval(() => {
-                if (window.outerHeight - window.innerHeight > 200 || 
-                    window.outerWidth - window.innerWidth > 200) {
-                    if (!devtools.open) {
-                        devtools.open = true;
-                        showWarning();
-                    }
-                }
-            }, 500);
         }
-
-        function showWarning() {
-            const warning = document.querySelector('.warning');
-            warning.style.animation = 'glitch 0.5s ease-in-out 3';
-            
-            // Add extra security message
-            const extraWarning = document.createElement('p');
-            extraWarning.textContent = '🚨 DETEKSI INTRUSI - AKSES DITOLAK 🚨';
-            extraWarning.style.color = '#ff0000';
-            extraWarning.style.fontWeight = 'bold';
-            extraWarning.style.animation = 'glow 0.5s infinite';
-            
-            const attempts = document.querySelector('.decrypt-attempts');
-            if (!attempts.querySelector('.intrusion-warning')) {
-                extraWarning.className = 'intrusion-warning';
-                attempts.appendChild(extraWarning);
-            }
-        }
-
-        // Responsive matrix rain regeneration
+        
         function handleResize() {
             createMatrixRain();
         }
@@ -623,26 +604,10 @@
 
         window.addEventListener('resize', handleResize);
         
-        // Regenerate matrix rain periodically with responsive timing
         const regenerateInterval = window.innerWidth < 768 ? 15000 : 10000;
         setInterval(() => {
             createMatrixRain();
         }, regenerateInterval);
-
-        // Image loading fallback
-        window.addEventListener('load', () => {
-            const hiddenImage = document.querySelector('.hidden-image');
-            const img = new Image();
-            img.onload = () => {
-                hiddenImage.style.backgroundImage = `url('pesan_tersembunyi.png')`;
-                console.log('🔒 Gambar tersembunyi berhasil dimuat');
-            };
-            img.onerror = () => {
-                console.log('⚠️ Menggunakan gambar fallback');
-                // Fallback SVG sudah ada di CSS
-            };
-            img.src = 'pesan_tersembunyi.png';
-        });
     </script>
 </body>
 </html>
