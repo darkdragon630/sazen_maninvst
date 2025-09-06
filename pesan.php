@@ -5,343 +5,314 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pesan Tersembunyi</title>
     <style>
-        body {
-            margin: 0;
-            padding: clamp(10px, 3vw, 20px);
-            font-family: 'Courier New', monospace;
-            background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
-            color: #00ff41;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        /* ---------- GLOBAL ---------- */
+body {
+    margin: 0;
+    padding: clamp(10px, 3vw, 20px);
+    font-family: 'Courier New', monospace;
+    background: linear-gradient(45deg, #1a1a2e, #16213e, #0f3460);
+    color: #00ff41;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            text-align: center;
-            position: relative;
-            padding: 0 clamp(10px, 2vw, 20px);
-        }
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    text-align: center;
+    position: relative;
+    padding: 0 clamp(10px, 2vw, 20px);
+}
 
-        h1 {
-            font-size: clamp(1.8em, 5vw, 2.5em);
-            margin-bottom: clamp(20px, 4vh, 30px);
-            text-shadow: 0 0 10px #00ff41;
-            animation: glow 2s ease-in-out infinite alternate;
-            word-wrap: break-word;
-        }
+/* ---------- TYPO ---------- */
+h1 {
+    font-size: clamp(1.8em, 5vw, 2.5em);
+    margin-bottom: clamp(20px, 4vh, 30px);
+    text-shadow: 0 0 10px #00ff41;
+    animation: glow 2s ease-in-out infinite alternate;
+    word-wrap: break-word;
+}
 
-        @keyframes glow {
-            from { text-shadow: 0 0 10px #00ff41; }
-            to { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41; }
-        }
+@keyframes glow {
+    from { text-shadow: 0 0 10px #00ff41; }
+    to   { text-shadow: 0 0 20px #00ff41, 0 0 30px #00ff41; }
+}
 
-        .noise-layer {
-            position: relative;
-            width: min(90vw, 600px);
-            height: min(60vw, 400px);
-            max-height: 70vh;
-            margin: 0 auto;
-            background: #000;
-            overflow: hidden;
-            border: clamp(1px, 0.3vw, 2px) solid #00ff41;
-            box-shadow: 0 0 clamp(10px, 2vw, 20px) rgba(0, 255, 65, 0.3);
-            border-radius: clamp(5px, 1vw, 10px);
-        }
+/* ---------- NOISE LAYER ---------- */
+.noise-layer {
+    position: relative;
+    width: min(90vw, 600px);
+    height: min(60vw, 400px);
+    max-height: 70vh;
+    margin: 0 auto;
+    background: #000;
+    overflow: hidden;
+    border: clamp(1px, 0.3vw, 2px) solid #00ff41;
+    box-shadow: 0 0 clamp(10px, 2vw, 20px) rgba(0, 255, 65, 0.3);
+    border-radius: clamp(5px, 1vw, 10px);
+}
 
-        .hidden-image {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: url('pesan_tesembunyi.png') no-repeat center;
-            background-size: contain;
-            opacity: 0.05;
-            z-index: 1;
-            filter: brightness(0.1) contrast(0.3);
-            mix-blend-mode: screen;
-            transition: all 2s ease;
-        }
+/* ---------- HIDDEN IMAGE (FADE-IN 2,5s) ---------- */
+.hidden-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('pesan_tesembunyi.png') no-repeat center / contain;
+    opacity: 0.05;
+    z-index: 1;
+    filter: brightness(0.1) contrast(0.3);
+    mix-blend-mode: screen;
+}
 
-        .hidden-image.revealed-image {
-            opacity: 0.8;
-            filter: brightness(1) contrast(1);
-            mix-blend-mode: normal;
-        }
+.hidden-image.revealed-image {
+    opacity: 0;
+    animation: fadeIn 2.5s forwards; /* 2,5 detik baru full 0.8 */
+    mix-blend-mode: normal;
+}
 
-        .noise {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 2;
-            pointer-events: none;
-            transition: opacity 2s ease;
-        }
+@keyframes fadeIn {
+    to {
+        opacity: 0.8;
+        filter: brightness(1) contrast(1);
+    }
+}
 
-        .static-noise {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: 
-                radial-gradient(circle at 20% 30%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
-                radial-gradient(circle at 80% 70%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
-                radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
-                radial-gradient(circle at 60% 20%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
-                radial-gradient(circle at 90% 40%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
-                linear-gradient(90deg, transparent 50%, rgba(0, 255, 65, 0.05) 50%);
-            background-size: clamp(2px, 0.5vw, 3px) clamp(2px, 0.5vw, 3px), 
-                           clamp(3px, 0.7vw, 4px) clamp(3px, 0.7vw, 4px), 
-                           clamp(1px, 0.3vw, 2px) clamp(1px, 0.3vw, 2px), 
-                           clamp(4px, 0.8vw, 5px) clamp(4px, 0.8vw, 5px), 
-                           clamp(2px, 0.5vw, 3px) clamp(2px, 0.5vw, 3px), 
-                           clamp(1px, 0.3vw, 2px) clamp(1px, 0.3vw, 2px);
-            animation: staticNoise 0.1s infinite;
-        }
+/* ---------- NOISE ---------- */
+.noise {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+    pointer-events: none;
+    transition: opacity 2s ease;
+}
 
-        @keyframes staticNoise {
-            0% { transform: translate(0, 0); }
-            25% { transform: translate(-1px, 1px); }
-            50% { transform: translate(1px, -1px); }
-            75% { transform: translate(-1px, -1px); }
-            100% { transform: translate(1px, 1px); }
-        }
+.static-noise {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(circle at 20% 30%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
+        radial-gradient(circle at 80% 70%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
+        radial-gradient(circle at 40% 80%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
+        radial-gradient(circle at 60% 20%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
+        radial-gradient(circle at 90% 40%, rgba(0, 255, 65, 0.1) 0%, transparent 2%),
+        linear-gradient(90deg, transparent 50%, rgba(0, 255, 65, 0.05) 50%);
+    background-size:
+        clamp(2px, 0.5vw, 3px) clamp(2px, 0.5vw, 3px),
+        clamp(3px, 0.7vw, 4px) clamp(3px, 0.7vw, 4px),
+        clamp(1px, 0.3vw, 2px) clamp(1px, 0.3vw, 2px),
+        clamp(4px, 0.8vw, 5px) clamp(4px, 0.8vw, 5px),
+        clamp(2px, 0.5vw, 3px) clamp(2px, 0.5vw, 3px),
+        clamp(1px, 0.3vw, 2px) clamp(1px, 0.3vw, 2px);
+    animation: staticNoise 0.1s infinite;
+}
 
-        .matrix-rain {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 3;
-        }
+@keyframes staticNoise {
+    0%   { transform: translate(0, 0); }
+    25%  { transform: translate(-1px, 1px); }
+    50%  { transform: translate(1px, -1px); }
+    75%  { transform: translate(-1px, -1px); }
+    100% { transform: translate(1px, 1px); }
+}
 
-        .matrix-column {
-            position: absolute;
-            top: -100%;
-            color: #00ff41;
-            font-size: clamp(8px, 1.5vw, 12px);
-            line-height: clamp(8px, 1.5vw, 12px);
-            white-space: pre;
-            animation: matrixFall linear infinite;
-            opacity: clamp(0.2, 0.5vw, 0.4);
-        }
+/* ---------- MATRIX RAIN ---------- */
+.matrix-rain {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 3;
+}
 
-        @keyframes matrixFall {
-            to { top: 100%; }
-        }
+.matrix-column {
+    position: absolute;
+    top: -100%;
+    color: #00ff41;
+    font-size: clamp(8px, 1.5vw, 12px);
+    line-height: clamp(8px, 1.5vw, 12px);
+    white-space: pre;
+    animation: matrixFall linear infinite;
+    opacity: clamp(0.2, 0.5vw, 0.4);
+}
 
-        .decrypt-panel {
-            margin-top: clamp(20px, 4vh, 30px);
-            padding: clamp(15px, 3vw, 20px);
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid #00ff41;
-            color: #00ff41;
-            border-radius: clamp(5px, 1vw, 10px);
-            box-shadow: 0 0 clamp(10px, 2vw, 15px) rgba(0, 255, 65, 0.3);
-            backdrop-filter: blur(5px);
-            transition: all 0.3s ease;
-        }
+@keyframes matrixFall {
+    to { top: 100%; }
+}
 
-        .decrypt-panel.success-reveal {
-            border-color: #00ff41;
-            background: rgba(0, 50, 0, 0.9);
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
-        }
+/* ---------- DECRYPT PANEL ---------- */
+.decrypt-panel {
+    margin-top: clamp(20px, 4vh, 30px);
+    padding: clamp(15px, 3vw, 20px);
+    background: rgba(0, 0, 0, 0.9);
+    border: 2px solid #00ff41;
+    color: #00ff41;
+    border-radius: clamp(5px, 1vw, 10px);
+    box-shadow: 0 0 clamp(10px, 2vw, 15px) rgba(0, 255, 65, 0.3);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
 
-        .decrypt-panel.failed-attempt {
-            border-color: #ff0000;
-            background: rgba(50, 0, 0, 0.9);
-            animation: shake 0.5s ease;
-        }
+.decrypt-panel.success-reveal {
+    border-color: #00ff41;
+    background: rgba(0, 50, 0, 0.9);
+    box-shadow: 0 0 30px rgba(0, 255, 65, 0.6);
+}
 
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
+.decrypt-panel.failed-attempt {
+    border-color: #ff0000;
+    background: rgba(50, 0, 0, 0.9);
+    animation: shake 0.5s ease;
+}
 
-        .decrypt-panel h3 {
-            font-size: clamp(1.1em, 3.5vw, 1.4em);
-            margin: 0 0 clamp(15px, 3vh, 20px) 0;
-            text-shadow: 0 0 5px #00ff41;
-        }
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%       { transform: translateX(-5px); }
+    75%       { transform: translateX(5px); }
+}
 
-        .input-group {
-            margin-bottom: clamp(15px, 3vh, 20px);
-        }
+.decrypt-panel h3 {
+    font-size: clamp(1.1em, 3.5vw, 1.4em);
+    margin: 0 0 clamp(15px, 3vh, 20px) 0;
+    text-shadow: 0 0 5px #00ff41;
+}
 
-        .input-group label {
-            display: block;
-            margin-bottom: clamp(8px, 2vh, 10px);
-            font-size: clamp(0.9em, 2.5vw, 1em);
-            color: #ffaa00;
-        }
+.input-group {
+    margin-bottom: clamp(15px, 3vh, 20px);
+}
 
-        #decryptCode {
-            width: 100%;
-            padding: clamp(10px, 2.5vw, 15px);
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #00ff41;
-            color: #00ff41;
-            font-family: 'Courier New', monospace;
-            font-size: clamp(0.9em, 2.5vw, 1em);
-            border-radius: clamp(3px, 0.5vw, 5px);
-            box-sizing: border-box;
-        }
+.input-group label {
+    display: block;
+    margin-bottom: clamp(8px, 2vh, 10px);
+    font-size: clamp(0.9em, 2.5vw, 1em);
+    color: #ffaa00;
+}
 
-        #decryptCode:focus {
-            outline: none;
-            border-color: #ffaa00;
-            box-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
-        }
+#decryptCode {
+    width: 100%;
+    padding: clamp(10px, 2.5vw, 15px);
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9em, 2.5vw, 1em);
+    border-radius: clamp(3px, 0.5vw, 5px);
+    box-sizing: border-box;
+}
 
-        #decryptCode:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+#decryptCode:focus {
+    outline: none;
+    border-color: #ffaa00;
+    box-shadow: 0 0 10px rgba(255, 170, 0, 0.3);
+}
 
-        #decryptBtn {
-            width: 100%;
-            padding: clamp(12px, 3vw, 15px);
-            background: linear-gradient(45deg, #00ff41, #00cc33);
-            border: none;
-            color: #000;
-            font-family: 'Courier New', monospace;
-            font-size: clamp(0.9em, 2.5vw, 1.1em);
-            font-weight: bold;
-            border-radius: clamp(3px, 0.5vw, 5px);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
+#decryptCode:disabled,
+#decryptBtn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
-        #decryptBtn:hover:not(:disabled) {
-            background: linear-gradient(45deg, #00cc33, #00ff41);
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
-        }
+#decryptBtn {
+    width: 100%;
+    padding: clamp(12px, 3vw, 15px);
+    background: linear-gradient(45deg, #00ff41, #00cc33);
+    border: none;
+    color: #000;
+    font-family: 'Courier New', monospace;
+    font-size: clamp(0.9em, 2.5vw, 1.1em);
+    font-weight: bold;
+    border-radius: clamp(3px, 0.5vw, 5px);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
 
-        #decryptBtn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+#decryptBtn:hover:not(:disabled) {
+    background: linear-gradient(45deg, #00cc33, #00ff41);
+    box-shadow: 0 0 15px rgba(0, 255, 65, 0.5);
+}
 
-        .status-display {
-            margin-top: clamp(15px, 3vh, 20px);
-            padding: clamp(10px, 2vw, 15px);
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid #333;
-            border-radius: clamp(3px, 0.5vw, 5px);
-        }
+/* ---------- STATUS ---------- */
+.status-display {
+    margin-top: clamp(15px, 3vh, 20px);
+    padding: clamp(10px, 2vw, 15px);
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid #333;
+    border-radius: clamp(3px, 0.5vw, 5px);
+}
 
-        .hidden-image {
-            opacity: 0.05;
-            transition: all 2s ease;
-            /* properti lain */
-       }
+.status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: clamp(5px, 1vh, 8px) 0;
+    font-size: clamp(0.8em, 2vw, 0.9em);
+}
 
-       .hidden-image.revealed-image {
-           opacity: 0.8;
-           filter: brightness(1) contrast(1);
-           mix-blend-mode: normal;
-        }
+.status-label { color: #888; }
+.status-value { font-weight: bold; }
+#statusText   { color: #ffaa00; }
 
-        .status-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: clamp(5px, 1vh, 8px) 0;
-            font-size: clamp(0.8em, 2vw, 0.9em);
-        }
+/* ---------- WARNING ---------- */
+.warning {
+    margin-top: clamp(20px, 4vh, 30px);
+    padding: clamp(15px, 3vw, 20px);
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid #ff0000;
+    color: #ff4444;
+    border-radius: clamp(5px, 1vw, 10px);
+    box-shadow: 0 0 clamp(10px, 2vw, 15px) rgba(255, 0, 0, 0.3);
+    backdrop-filter: blur(5px);
+}
 
-        .status-label {
-            color: #888;
-        }
+.warning h3 {
+    font-size: clamp(1.1em, 3.5vw, 1.4em);
+    margin: 0 0 clamp(8px, 2vh, 15px) 0;
+    text-shadow: 0 0 5px #ff0000;
+}
 
-        .status-value {
-            font-weight: bold;
-        }
+.warning p {
+    font-size: clamp(0.8em, 2.5vw, 1em);
+    margin: clamp(6px, 1.5vh, 10px) 0;
+    line-height: 1.4;
+}
 
-        #statusText {
-            color: #ffaa00;
-        }
+.glitch-text {
+    position: relative;
+    display: inline-block;
+    animation: glitch 1s infinite;
+    text-shadow: 0 0 5px #ff0000;
+}
 
-        .warning {
-            margin-top: clamp(20px, 4vh, 30px);
-            padding: clamp(15px, 3vw, 20px);
-            background: rgba(0, 0, 0, 0.8);
-            border: 1px solid #ff0000;
-            color: #ff4444;
-            border-radius: clamp(5px, 1vw, 10px);
-            box-shadow: 0 0 clamp(10px, 2vw, 15px) rgba(255, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
-        }
+@keyframes glitch {
+    0%, 100% { transform: translate(0); }
+    20%       { transform: translate(-2px, 2px); }
+    40%       { transform: translate(-2px, -2px); }
+    60%       { transform: translate(2px, 2px); }
+    80%       { transform: translate(2px, -2px); }
+}
 
-        .warning h3 {
-            font-size: clamp(1.1em, 3.5vw, 1.4em);
-            margin: 0 0 clamp(8px, 2vh, 15px) 0;
-            text-shadow: 0 0 5px #ff0000;
-        }
+/* ---------- RESPONSIVE ---------- */
+@media (max-width: 768px) {
+    body        { padding: clamp(8px, 2vw, 15px); }
+    .noise-layer { border-width: 1px; height: min(70vw, 350px); }
+    .matrix-column { opacity: 0.25; }
+}
 
-        .warning p {
-            font-size: clamp(0.8em, 2.5vw, 1em);
-            margin: clamp(6px, 1.5vh, 10px) 0;
-            line-height: 1.4;
-        }
-
-        .glitch-text {
-            position: relative;
-            display: inline-block;
-            animation: glitch 1s infinite;
-            text-shadow: 0 0 5px #ff0000;
-        }
-
-        @keyframes glitch {
-            0%, 100% { transform: translate(0); }
-            20% { transform: translate(-2px, 2px); }
-            40% { transform: translate(-2px, -2px); }
-            60% { transform: translate(2px, 2px); }
-            80% { transform: translate(2px, -2px); }
-        }
-
-        /* Responsive breakpoints */
-        @media (max-width: 768px) {
-            body {
-                padding: clamp(8px, 2vw, 15px);
-            }
-            
-            .noise-layer {
-                border-width: 1px;
-                height: min(70vw, 350px);
-            }
-            
-            .matrix-column {
-                opacity: 0.25;
-            }
-        }
-
-        @media (max-width: 480px) {
-            body {
-                padding: clamp(5px, 1.5vw, 10px);
-                font-size: clamp(12px, 3vw, 16px);
-            }
-            
-            .container {
-                padding: 0 clamp(5px, 1vw, 15px);
-            }
-            
-            .noise-layer {
-                height: min(80vw, 300px);
-                border-radius: 5px;
-            }
-
-            .matrix-column {
-                font-size: clamp(6px, 1.2vw, 10px);
-                line-height: clamp(6px, 1.2vw, 10px);
-            }
-        }
+@media (max-width: 480px) {
+    body        { padding: clamp(5px, 1.5vw, 10px); font-size: clamp(12px, 3vw, 16px); }
+    .container   { padding: 0 clamp(5px, 1vw, 15px); }
+    .noise-layer { height: min(80vw, 300px); border-radius: 5px; }
+    .matrix-column {
+        font-size: clamp(6px, 1.2vw, 10px);
+        line-height: clamp(6px, 1.2vw, 10px);
+    }
+}
     </style>
 </head>
 <body>
@@ -389,7 +360,7 @@
     </div>
 
     <script>
-       // Matrix rain effect with responsive character count
+  // Matrix rain effect with responsive character count
 function createMatrixRain() {
     const container = document.getElementById('matrixRain');
     const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
@@ -430,7 +401,6 @@ function initializeDecryptPanel() {
     const btn = document.getElementById('decryptBtn');
     const statusText = document.getElementById('statusText');
     const failCount = document.getElementById('failCount');
-    const decryptPanel = document.querySelector('.decrypt-panel');
 
     attemptCountEl.textContent = attemptCount;
 
@@ -472,7 +442,7 @@ function attemptDecrypt() {
     }
 
     attemptCount++;
-    localStorage.setItem('attemptCount', attemptCount); // simpan ke localStorage
+    localStorage.setItem('attemptCount', attemptCount);
     attemptCountEl.textContent = attemptCount;
 
     btn.disabled = true;
@@ -481,32 +451,11 @@ function attemptDecrypt() {
     statusText.style.color = '#ffaa00';
 
     setTimeout(() => {
-        if (inputCode === correctCode) {
-            statusText.textContent = 'BERHASIL - AKSES DIBERIKAN!';
-            statusText.style.color = '#00ff41';
+        const isCorrect = inputCode === correctCode;
+        const isSecret = inputCode === secretCode;
 
-            decryptPanel.classList.add('success-reveal');
-            hiddenImage.classList.add('revealed-image');
-
-            // Hilangkan matrix rain dan noise dengan transisi
-            document.querySelector('.static-noise').style.opacity = '0';
-            document.querySelector('.matrix-rain').style.opacity = '0';
-
-            btn.textContent = '✅ BERHASIL';
-            btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
-            input.disabled = true;
-            failCount.textContent = 'BERHASIL!';
-            failCount.style.color = '#00ff41';
-
-            localStorage.setItem('attemptCount', attemptCount);
-
-            // Tampilkan pesan setelah delay agar gambar sudah terlihat
-            setTimeout(() => {
-                showSuccessMessage();
-            }, 800);
-
-        } else if (inputCode === secretCode) {
-            statusText.textContent = 'PESAN RAHASIA TERBACA!';
+        if (isCorrect || isSecret) {
+            statusText.textContent = isCorrect ? 'BERHASIL - AKSES DIBERIKAN!' : 'PESAN RAHASIA TERBACA!';
             statusText.style.color = '#00ff41';
 
             failCount.textContent = 'BERHASIL!';
@@ -515,19 +464,21 @@ function attemptDecrypt() {
             decryptPanel.classList.add('success-reveal');
             hiddenImage.classList.add('revealed-image');
 
+            // Hilangkan noise
             document.querySelector('.static-noise').style.opacity = '0';
             document.querySelector('.matrix-rain').style.opacity = '0';
 
             btn.textContent = '✅ BERHASIL';
             btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
             input.disabled = true;
-            btn.disabled = true;
 
             localStorage.setItem('attemptCount', attemptCount);
 
+            // Tampilkan pesan setelah 2.5 detik
             setTimeout(() => {
-                showSecretMessage();
-            }, 800);
+                if (isCorrect) showSuccessMessage();
+                if (isSecret) showSecretMessage();
+            }, 2500);
 
         } else {
             statusText.textContent = 'KODE SALAH - AKSES DITOLAK!';
