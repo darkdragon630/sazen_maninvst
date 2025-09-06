@@ -236,6 +236,18 @@
             border-radius: clamp(3px, 0.5vw, 5px);
         }
 
+        .hidden-image {
+            opacity: 0.05;
+            transition: all 2s ease;
+            /* properti lain */
+       }
+
+       .hidden-image.revealed-image {
+           opacity: 0.8;
+           filter: brightness(1) contrast(1);
+           mix-blend-mode: normal;
+        }
+
         .status-row {
             display: flex;
             justify-content: space-between;
@@ -476,10 +488,9 @@ function attemptDecrypt() {
             decryptPanel.classList.add('success-reveal');
             hiddenImage.classList.add('revealed-image');
 
-            setTimeout(() => {
-                document.querySelector('.static-noise').style.opacity = '0.3';
-                document.querySelector('.matrix-rain').style.opacity = '0.2';
-            }, 500);
+            // Hilangkan matrix rain dan noise dengan transisi
+            document.querySelector('.static-noise').style.opacity = '0';
+            document.querySelector('.matrix-rain').style.opacity = '0';
 
             btn.textContent = '✅ BERHASIL';
             btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
@@ -487,10 +498,12 @@ function attemptDecrypt() {
             failCount.textContent = 'BERHASIL!';
             failCount.style.color = '#00ff41';
 
-            // Pastikan simpan attemptCount saat berhasil
             localStorage.setItem('attemptCount', attemptCount);
 
-            showSuccessMessage();
+            // Tampilkan pesan setelah delay agar gambar sudah terlihat
+            setTimeout(() => {
+                showSuccessMessage();
+            }, 800);
 
         } else if (inputCode === secretCode) {
             statusText.textContent = 'PESAN RAHASIA TERBACA!';
@@ -499,15 +512,22 @@ function attemptDecrypt() {
             failCount.textContent = 'BERHASIL!';
             failCount.style.color = '#00ff41';
 
+            decryptPanel.classList.add('success-reveal');
+            hiddenImage.classList.add('revealed-image');
+
+            document.querySelector('.static-noise').style.opacity = '0';
+            document.querySelector('.matrix-rain').style.opacity = '0';
+
             btn.textContent = '✅ BERHASIL';
             btn.style.background = 'linear-gradient(45deg, #00ff41, #00cc33)';
             input.disabled = true;
             btn.disabled = true;
 
-            // Simpan juga attemptCount saat berhasil
             localStorage.setItem('attemptCount', attemptCount);
 
-            showSecretMessage();
+            setTimeout(() => {
+                showSecretMessage();
+            }, 800);
 
         } else {
             statusText.textContent = 'KODE SALAH - AKSES DITOLAK!';
