@@ -1922,6 +1922,163 @@ section {
     }
 }
 
+/* ===== FORCE MOBILE LAYOUT ON ALL SCREEN SIZES ===== */
+@media (min-width: 576px) {
+    /* Grid Layouts */
+    .stats-grid,
+    .investments-grid,
+    .profit-list,
+    .category-grid,
+    .profit-summary,
+    .analytics-grid,
+    .profit-analytics {
+        grid-template-columns: 1fr !important;
+        gap: var(--spacing-md) !important;
+    }
+
+    /* Header */
+    .header-content {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: var(--spacing-md) !important;
+    }
+
+    .header-left {
+        flex-direction: column !important;
+        align-items: center !important;
+        gap: var(--spacing-md) !important;
+    }
+
+    .header-actions {
+        flex-direction: column !important;
+        width: 100% !important;
+        gap: var(--spacing-sm) !important;
+    }
+
+    .notification-btn,
+    .logout-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Section Headers */
+    .section-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--spacing-sm) !important;
+    }
+
+    .header-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+        flex-wrap: wrap !important;
+    }
+
+    /* Cards */
+    .stat-card,
+    .investment-card,
+    .keuntungan-card,
+    .category-card,
+    .analytics-card,
+    .profit-analytics-card {
+        padding: var(--spacing-lg) !important;
+    }
+
+    /* Footer */
+    .footer-content {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        gap: var(--spacing-sm) !important;
+    }
+
+    /* Typography */
+    .stat-number,
+    .amount-value,
+    .keuntungan-amount,
+    .value-amount {
+        font-size: var(--font-size-lg) !important;
+    }
+
+    .section-title {
+        font-size: var(--font-size-lg) !important;
+    }
+
+    /* Buttons */
+    .add-btn,
+    .profit-empty-btn,
+    .empty-btn {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+
+    /* Profit Filter */
+    .profit-filter-container {
+        flex-wrap: wrap !important;
+        width: 100% !important;
+    }
+
+    .profit-filter-btn {
+        flex: 1 1 100% !important;
+        text-align: center !important;
+    }
+
+    /* Card Menus */
+    .menu-dropdown {
+        position: static !important;
+        width: 100% !important;
+        margin-top: var(--spacing-sm) !important;
+        transform: none !important;
+        max-height: 0 !important;
+        overflow: hidden !important;
+        transition: all var(--transition-fast) !important;
+    }
+
+    .menu-dropdown.show {
+        max-height: 200px !important;
+    }
+
+    /* Card Footers */
+    .card-footer,
+    .profit-card-footer,
+    .keuntungan-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--spacing-sm) !important;
+    }
+
+    /* Performance Metrics */
+    .performance-metrics {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+
+    /* Date Section */
+    .date-section {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: var(--spacing-sm) !important;
+    }
+
+    /* Scroll to Top */
+    .scroll-to-top {
+        width: 45px !important;
+        height: 45px !important;
+        bottom: var(--spacing-md) !important;
+        right: var(--spacing-md) !important;
+    }
+
+    /* Toast */
+    .toast {
+        left: var(--spacing-sm) !important;
+        right: var(--spacing-sm) !important;
+        top: var(--spacing-md) !important;
+        min-width: auto !important;
+        max-width: none !important;
+    }
+}
+
 /* Desktop */
 @media (min-width: 1200px) and (max-width: 1399px) {
       .container {
