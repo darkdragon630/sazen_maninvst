@@ -114,9 +114,6 @@ if (isset($_POST['logout'])) {
     <!-- Loading Screen -->
     <div class="loading-screen" id="loadingScreen">
         <div class="loading-container">
-            <div class="loading-logo">
-                <i class="fas fa-chart-line"></i>
-            </div>
             <div class="loading-spinner"></div>
             <div class="loading-text">Memuat Dashboard...</div>
         </div>
