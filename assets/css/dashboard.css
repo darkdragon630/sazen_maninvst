@@ -1833,340 +1833,30 @@ section {
 
 /* Large Desktop */
 @media (min-width: 1400px) {
-    .container {
-        padding: 0 var(--spacing-md);
-    }
-    
-    .main-content {
-        padding: var(--spacing-xl) var(--spacing-md);
-    }
-    
-    .header-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: var(--spacing-lg);
-        padding: var(--spacing-lg) var(--spacing-md);
-    }
-    
-    .header-left {
-        flex-direction: column;
-        align-items: center;
-        gap: var(--spacing-lg);
-    }
-    
-    .stats-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .investments-grid,
-    .profit-list {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .category-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .profit-summary {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .analytics-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .profit-analytics {
-        grid-template-columns: 1fr;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-    }
-    
-    .header-actions {
-        flex-wrap: wrap;
-        gap: var(--spacing-sm);
-    }
-    
-    .profit-filter-container {
-        flex-wrap: wrap;
-    }
-    
-    .section-title {
-        font-size: var(--font-size-xl);
-    }
-    
-    .profit-empty-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .footer-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: var(--spacing-md);
-    }
-    
-    .footer-links {
-        justify-content: center;
-        gap: var(--spacing-md);
-    }
-}
+  .container {
+    max-width: 1600px;
+    padding: 0 var(--spacing-2xl);
+  }
 
-/* ===== FORCE MOBILE LAYOUT ON ALL SCREEN SIZES ===== */
-@media (min-width: 576px) {
-    /* Grid Layouts */
-    .stats-grid,
-    .investments-grid,
-    .profit-list,
-    .category-grid,
-    .profit-summary,
-    .analytics-grid,
-    .profit-analytics {
-        grid-template-columns: 1fr !important;
-        gap: var(--spacing-md) !important;
-    }
+  .stat-card {
+    grid-template-columns: repeat(4, 1fr);
+  }
 
-    /* Header */
-    .header-content {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        gap: var(--spacing-md) !important;
-    }
-
-    .header-left {
-        flex-direction: column !important;
-        align-items: center !important;
-        gap: var(--spacing-md) !important;
-    }
-
-    .header-actions {
-        flex-direction: column !important;
-        width: 100% !important;
-        gap: var(--spacing-sm) !important;
-    }
-
-    .notification-btn,
-    .logout-btn {
-        width: 100% !important;
-        justify-content: center !important;
-    }
-
-    /* Section Headers */
-    .section-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: var(--spacing-sm) !important;
-    }
-
-    .header-actions {
-        width: 100% !important;
-        justify-content: flex-start !important;
-        flex-wrap: wrap !important;
-    }
-
-    /* Cards */
-    .stat-card,
-    .investment-card,
-    .keuntungan-card,
-    .category-card,
-    .analytics-card,
-    .profit-analytics-card {
-        padding: var(--spacing-lg) !important;
-    }
-
-    /* Footer */
-    .footer-content {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        gap: var(--spacing-sm) !important;
-    }
-
-    /* Typography */
-    .stat-number,
-    .amount-value,
-    .keuntungan-amount,
-    .value-amount {
-        font-size: var(--font-size-lg) !important;
-    }
-
-    .section-title {
-        font-size: var(--font-size-lg) !important;
-    }
-
-    /* Buttons */
-    .add-btn,
-    .profit-empty-btn,
-    .empty-btn {
-        width: 100% !important;
-        justify-content: center !important;
-    }
-
-    /* Profit Filter */
-    .profit-filter-container {
-        flex-wrap: wrap !important;
-        width: 100% !important;
-    }
-
-    .profit-filter-btn {
-        flex: 1 1 100% !important;
-        text-align: center !important;
-    }
-
-    /* Card Menus */
-    .menu-dropdown {
-        position: static !important;
-        width: 100% !important;
-        margin-top: var(--spacing-sm) !important;
-        transform: none !important;
-        max-height: 0 !important;
-        overflow: hidden !important;
-        transition: all var(--transition-fast) !important;
-    }
-
-    .menu-dropdown.show {
-        max-height: 200px !important;
-    }
-
-    /* Card Footers */
-    .card-footer,
-    .profit-card-footer,
-    .keuntungan-header {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: var(--spacing-sm) !important;
-    }
-
-    /* Performance Metrics */
-    .performance-metrics {
-        width: 100% !important;
-        justify-content: space-between !important;
-    }
-
-    /* Date Section */
-    .date-section {
-        flex-direction: column !important;
-        align-items: flex-start !important;
-        gap: var(--spacing-sm) !important;
-    }
-
-    /* Scroll to Top */
-    .scroll-to-top {
-        width: 45px !important;
-        height: 45px !important;
-        bottom: var(--spacing-md) !important;
-        right: var(--spacing-md) !important;
-    }
-
-    /* Toast */
-    .toast {
-        left: var(--spacing-sm) !important;
-        right: var(--spacing-sm) !important;
-        top: var(--spacing-md) !important;
-        min-width: auto !important;
-        max-width: none !important;
-    }
+  .investments-grid,
+  .profit-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }
 
 /* Desktop */
 @media (min-width: 1200px) and (max-width: 1399px) {
-      .container {
-        padding: 0 var(--spacing-md);
-    }
-    
-    .main-content {
-        padding: var(--spacing-xl) var(--spacing-md);
-    }
-    
-    .header-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: var(--spacing-lg);
-        padding: var(--spacing-lg) var(--spacing-md);
-    }
-    
-    .header-left {
-        flex-direction: column;
-        align-items: center;
-        gap: var(--spacing-lg);
-    }
-    
     .stats-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
+        grid-template-columns: repeat(4, 1fr);
     }
     
     .investments-grid,
     .profit-list {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .category-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .profit-summary {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .analytics-grid {
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-    
-    .profit-analytics {
-        grid-template-columns: 1fr;
-    }
-    
-    .section-header {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-    }
-    
-    .header-actions {
-        flex-wrap: wrap;
-        gap: var(--spacing-sm);
-    }
-    
-    .profit-filter-container {
-        flex-wrap: wrap;
-    }
-    
-    .section-title {
-        font-size: var(--font-size-xl);
-    }
-    
-    .profit-empty-actions {
-        flex-direction: column;
-        align-items: stretch;
-    }
-    
-    .footer-content {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        gap: var(--spacing-md);
-    }
-    
-    .footer-links {
-        justify-content: center;
-        gap: var(--spacing-md);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -2906,4 +2596,4 @@ section {
 
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-dark);
-}
+}  itu tampilan dekstop dan tampilan tablet belum sama dgn tampilan mobile nya
