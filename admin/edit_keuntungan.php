@@ -39,24 +39,40 @@ $investasi_list = $koneksi->query($sql_investasi)->fetchAll();
 $error = '';
 $success = '';
 
-// Fungsi parsing rupiah
+// Fungsi parsing rupiah yang diperbaiki
 function parseRupiah($value) {
+    if (!$value) return 0;
+    
+    // Hapus semua karakter kecuali angka, koma, dan titik
     $value = preg_replace('/[^\d\,\.]/', '', $value);
+    
     $lastComma = strrpos($value, ',');
     $lastDot = strrpos($value, '.');
-
-    if ($lastComma !== false && $lastDot !== false) {
+    
+    if ($lastComma === false && $lastDot === false) {
+        return floatval($value);
+    } elseif ($lastComma !== false && $lastDot !== false) {
         if ($lastComma > $lastDot) {
-            return floatval(str_replace(['.', ','], ['', '.'], $value));
+            // Koma sebagai desimal
+            $integerPart = substr($value, 0, $lastComma);
+            $decimalPart = substr($value, $lastComma + 1);
+            return floatval(str_replace(['.', ','], ['', '.'], $integerPart . '.' . $decimalPart));
         } else {
+            // Titik sebagai desimal
             return floatval(str_replace(',', '', $value));
         }
     } elseif ($lastComma !== false) {
+        // Hanya koma - anggap sebagai desimal
         return floatval(str_replace(',', '.', $value));
-    } elseif ($lastDot !== false) {
-        return floatval(str_replace('.', '', $value));
     } else {
-        return floatval($value);
+        // Hanya titik - bisa pemisah ribuan atau desimal
+        if (strlen(substr($value, $lastDot + 1)) <= 2) {
+            // Kemungkinan desimal
+            return floatval($value);
+        } else {
+            // Kemungkinan pemisah ribuan
+            return floatval(str_replace('.', '', $value));
+        }
     }
 }
 
@@ -326,6 +342,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05));
           color: #86efac;
           border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .alert.info {
+          background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(37, 99, 235, 0.05));
+          color: #93c5fd;
+          border-color: rgba(59, 130, 246, 0.2);
         }
 
         /* Form Styles */
@@ -752,6 +774,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             transform: translateY(-20px);
           }
         }
+
+        /* Ripple Animation */
+        @keyframes ripple {
+          to {
+            transform: scale(2);
+            opacity: 0;
+          }
+        }
     </style>
 </head>
 <body>
@@ -927,27 +957,105 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const submitBtn = document.getElementById('submitBtn');
         const loadingSpinner = document.getElementById('loadingSpinner');
 
-        // Currency formatting function
+        // Fungsi formatting currency yang diperbaiki
         function formatCurrency(value) {
-            // Remove all non-digit characters except comma and dot
+            if (!value) return '';
+            
+            // Hapus semua karakter kecuali angka, koma, dan titik
             value = value.replace(/[^\d\,\.]/g, '');
             
-            // Convert to number for formatting
-            let numValue = parseFloat(value.replace(/\./g, '').replace(',', '.')) || 0;
+            // Handle kasus khusus untuk input yang dimulai dengan koma atau titik
+            if (value.startsWith(',') || value.startsWith('.')) {
+                value = '0' + value;
+            }
             
-            // Format as Indonesian currency
+            // Cari posisi koma dan titik terakhir
+            const lastComma = value.lastIndexOf(',');
+            const lastDot = value.lastIndexOf('.');
+            
+            let numValue = 0;
+            
+            if (lastComma === -1 && lastDot === -1) {
+                // Tidak ada separator desimal
+                numValue = parseFloat(value) || 0;
+            } else if (lastComma > lastDot) {
+                // Koma adalah separator desimal (format Indonesia)
+                const integerPart = value.substring(0, lastComma).replace(/[\.\,]/g, '');
+                const decimalPart = value.substring(lastComma + 1);
+                numValue = parseFloat(integerPart + '.' + decimalPart) || 0;
+            } else if (lastDot > lastComma) {
+                // Titik adalah separator desimal (format internasional)
+                const integerPart = value.substring(0, lastDot).replace(/[\.\,]/g, '');
+                const decimalPart = value.substring(lastDot + 1);
+                numValue = parseFloat(integerPart + '.' + decimalPart) || 0;
+            } else if (lastComma !== -1) {
+                // Hanya ada koma
+                const integerPart = value.substring(0, lastComma).replace(/[\.\,]/g, '');
+                const decimalPart = value.substring(lastComma + 1);
+                numValue = parseFloat(integerPart + '.' + decimalPart) || 0;
+            } else {
+                // Hanya ada titik
+                const integerPart = value.substring(0, lastDot).replace(/[\.\,]/g, '');
+                const decimalPart = value.substring(lastDot + 1);
+                numValue = parseFloat(integerPart + '.' + decimalPart) || 0;
+            }
+            
+            // Format dengan pemisah ribuan titik dan desimal koma (format Indonesia)
             return numValue.toLocaleString('id-ID', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 6
             });
         }
 
-        // Currency input handler
-        document.getElementById('jumlah_keuntungan').addEventListener('input', function(e) {
-            let value = e.target.value;
+        // Fungsi untuk handle input currency yang lebih fleksibel
+        function handleCurrencyInput(input) {
+            let cursorPosition = input.selectionStart;
+            let value = input.value;
+            let oldLength = value.length;
+            
+            // Format nilai
             let formattedValue = formatCurrency(value);
-            e.target.value = formattedValue;
+            
+            // Update input
+            input.value = formattedValue;
+            
+            // Pertahankan posisi kursor
+            let newLength = formattedValue.length;
+            let lengthDiff = newLength - oldLength;
+            let newCursorPosition = cursorPosition + lengthDiff;
+            
+            // Pastikan posisi kursor tidak keluar batas
+            if (newCursorPosition < 0) newCursorPosition = 0;
+            if (newCursorPosition > newLength) newCursorPosition = newLength;
+            
+            // Set posisi kursor
+            setTimeout(() => {
+                input.setSelectionRange(newCursorPosition, newCursorPosition);
+            }, 0);
+        }
+
+        // Event listener untuk input jumlah keuntungan
+        document.getElementById('jumlah_keuntungan').addEventListener('input', function(e) {
+            handleCurrencyInput(e.target);
         });
+
+        // Tambahan: Handle paste event
+        document.getElementById('jumlah_keuntungan').addEventListener('paste', function(e) {
+            setTimeout(() => {
+                handleCurrencyInput(e.target);
+            }, 10);
+        });
+
+        // Fungsi untuk mengonversi nilai yang diformat kembali ke angka untuk form submission
+        function parseFormattedCurrency(value) {
+            if (!value) return 0;
+            
+            // Hapus semua karakter kecuali angka dan koma
+            value = value.replace(/[^\d\,]/g, '');
+            
+            // Ganti koma dengan titik untuk parsing
+            return parseFloat(value.replace(',', '.')) || 0;
+        }
 
         // Investment selection handler
         document.getElementById('investasi_id').addEventListener('change', function() {
@@ -1009,18 +1117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }, 600);
         }
 
-        // Add ripple animation CSS
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes ripple {
-                to {
-                    transform: scale(2);
-                    opacity: 0;
-                }
-            }
-        `;
-        document.head.appendChild(style);
-
         // Form validation
         function validateForm() {
             const investasiId = document.getElementById('investasi_id').value;
@@ -1034,7 +1130,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (!investasiId) errors.push('Pilih investasi');
             if (!judulKeuntungan) errors.push('Isi judul keuntungan');
-            if (!jumlahKeuntungan || jumlahKeuntungan === '0,00') errors.push('Isi jumlah keuntungan');
+            if (!jumlahKeuntungan || jumlahKeuntungan === '0,00' || parseFormattedCurrency(jumlahKeuntungan) <= 0) {
+                errors.push('Isi jumlah keuntungan dengan benar');
+            }
             if (!tanggalKeuntungan) errors.push('Pilih tanggal keuntungan');
             if (!sumberKeuntungan) errors.push('Pilih sumber keuntungan');
             if (!status) errors.push('Pilih status');
@@ -1055,6 +1153,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 showAlert('error', 'Harap lengkapi field berikut: ' + errors.join(', '));
                 return;
             }
+
+            // Convert formatted currency back to proper decimal format for server
+            const jumlahInput = document.getElementById('jumlah_keuntungan');
+            const rawValue = parseFormattedCurrency(jumlahInput.value);
+            
+            // Create hidden input with proper decimal format for server
+            let hiddenInput = document.querySelector('input[name="jumlah_keuntungan_raw"]');
+            if (!hiddenInput) {
+                hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'jumlah_keuntungan_raw';
+                form.appendChild(hiddenInput);
+            }
+            hiddenInput.value = rawValue.toString();
 
             isSubmitting = true;
             submitBtn.disabled = true;
@@ -1086,8 +1198,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Re-select original profit type
                 const originalSource = '<?= $keuntungan["sumber_keuntungan"] ?>';
                 if (originalSource) {
-                    const originalElement = document.querySelector(`input[name="sumber_keuntungan"][value="${originalSource}"]`).closest('.profit-type');
-                    originalElement.classList.add('selected');
+                    const originalElement = document.querySelector(`input[name="sumber_keuntungan"][value="${originalSource}"]`);
+                    if (originalElement) {
+                        originalElement.checked = true;
+                        originalElement.closest('.profit-type').classList.add('selected');
+                    }
                 }
                 
                 // Reset investment info
@@ -1095,14 +1210,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 document.getElementById('kategori_id').value = '<?= $keuntungan["kategori_id"] ?>';
                 document.getElementById('investmentInfo').classList.add('show');
                 
+                // Reset currency field to original format
+                document.getElementById('jumlah_keuntungan').value = '<?= number_format($keuntungan["jumlah_keuntungan"], 2, ",", ".") ?>';
+                
                 showAlert('info', 'Form telah direset ke nilai semula');
             }
         }
 
         // Show alert function
         function showAlert(type, message) {
-            const existingAlert = document.querySelector('.alert');
-            if (existingAlert && !existingAlert.id) {
+            const existingAlert = document.querySelector('.alert:not([id])');
+            if (existingAlert) {
                 existingAlert.remove();
             }
 
@@ -1169,8 +1287,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
                     e.preventDefault();
-                    const form = document.getElementById('editForm');
-                    const submitBtn = document.getElementById('submitBtn');
                     if (!submitBtn.disabled) {
                         form.dispatchEvent(new Event('submit', { cancelable: true }));
                     }
@@ -1183,6 +1299,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             formElements.forEach(element => {
                 element.addEventListener('change', () => {
+                    formChanged = true;
+                });
+                
+                element.addEventListener('input', () => {
                     formChanged = true;
                 });
             });
@@ -1213,12 +1333,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Escape to go back
             if (e.key === 'Escape') {
                 const backBtn = document.querySelector('.btn-secondary[href="../dashboard.php"]');
-                if (backBtn && !formChanged) {
+                if (backBtn && !document.querySelector('.alert')) {
                     window.location.href = backBtn.href;
-                } else if (formChanged) {
-                    if (confirm('Anda memiliki perubahan yang belum disimpan. Yakin ingin keluar?')) {
-                        window.location.href = '../dashboard.php';
-                    }
                 }
             }
         });
@@ -1227,7 +1343,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const tooltips = {
             'investasi_id': 'Pilih investasi yang menghasilkan keuntungan ini',
             'judul_keuntungan': 'Berikan nama yang jelas untuk keuntungan ini',
-            'jumlah_keuntungan': 'Masukkan jumlah dalam Rupiah',
+            'jumlah_keuntungan': 'Masukkan jumlah dalam Rupiah (contoh: 0,32 atau 1.000,50)',
             'persentase_keuntungan': 'Opsional: persentase keuntungan dari modal',
             'tanggal_keuntungan': 'Tanggal ketika keuntungan diperoleh',
             'status': 'Apakah keuntungan sudah Anda terima atau belum',
