@@ -114,7 +114,9 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
             </h1>
             <p class="header-subtitle">
                 <i class="fas fa-sync-alt subtitle-icon"></i>
-                Data portofolio diperbarui otomatis dari dashboard admin
+                Data portofolio diperbarui dari dashboard admin
+                <br>
+                Saham dan Crypto belum ditambahkan karena bingung cara uplod keuntunggan nya
             </p>
 
             <!-- Stats Cards in Header -->
