@@ -224,7 +224,7 @@ if (isset($_POST['logout'])) {
                         <i class="fas fa-arrow-up"></i>
                         <span>
                             <?= $stats['total_investasi_nilai'] > 0 
-                                ? number_format(($stats['total_nilai'] / $stats['total_investasi_nilai'])  2) 
+                                ? number_format(($stats['total_nilai'] / $stats['total_investasi_nilai']) * 100, 2) 
                                 : '0' ?>%
                         </span>
                     </div>
