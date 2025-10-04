@@ -445,7 +445,7 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
             </div>
             <div class="footer-links">
                 <a href="https://kalkulasiinvest.netlify.app/" class="footer-link">
-                    <i class="fas fa-calculator-alt"></i>
+                    <i class="fal fa-calculator"></i>
                     Kalkulator
                 </a>
                 <a href="#" class="footer-link">
