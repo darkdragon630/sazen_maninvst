@@ -444,9 +444,9 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                 <p class="footer-text">&copy; <?= date("Y"); ?> SAZEN Manajer Investasi version 1. Semua hak dilindungi.</p>
             </div>
             <div class="footer-links">
-                <a href="#" class="footer-link">
-                    <i class="fas fa-shield-alt"></i>
-                    Keamanan
+                <a href="https://kalkulasiinvest.netlify.app/" class="footer-link">
+                    <i class="fas fa-calculator-alt"></i>
+                    Kalkulator
                 </a>
                 <a href="#" class="footer-link">
                     <i class="fas fa-headset"></i>
