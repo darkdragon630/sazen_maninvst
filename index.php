@@ -116,12 +116,9 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                 <i class="fas fa-sync-alt subtitle-icon"></i>
                 Data portofolio diperbarui dari dashboard admin
                 <br>
-                <br>
                 yang akan datang data investasi saham dan crypto ditambahkan
                 <br>
-                <br>
                 fitur yag akan datang menanmpilkan kerugian dari investasi
-                <br>
                 <br>
                 menampil kan bukti investasi ketika tombol detail di klik
             </p>
