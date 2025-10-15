@@ -118,7 +118,7 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                 <br>
                 yang akan datang data investasi saham dan crypto ditambahkan
                 <br>
-                fitur yag akan datang menanmpilkan kerugian dari investasi
+                fitur yang akan datang menampilkan kerugian dari investasi
                 <br>
                 menampil kan bukti investasi ketika tombol detail di klik
             </p>
