@@ -121,6 +121,8 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                 fitur yang akan datang menampilkan kerugian dari investasi
                 <br>
                 menampil kan bukti investasi ketika tombol detail di klik
+                <br>
+                website sementara hanya menampilkan riwayat keuntungan dari investasi yg di lakukan
             </p>
 
             <!-- Stats Cards in Header -->
