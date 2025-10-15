@@ -76,7 +76,7 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Portofolio Investasi - SAAZ</title>
+    <title>Portofolio Investasi Pribadi- Muhammad Burhanudin Syaifullah Azmi</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -109,8 +109,8 @@ $performance_ytd = $total_investasi > 0 ? ($total_keuntungan / $total_investasi)
                 <div class="icon-pulse"></div>
             </div>
             <h1 class="header-title">
-                <span class="title-text">Portofolio Investasi</span>
-                <span class="title-highlight">SAAZ</span>
+                <span class="title-text">Portofolio Investasi Pribadi</span>
+                <span class="title-highlight">Muhammad Burhanudin Syaifullah Azmi</span>
             </h1>
             <p class="header-subtitle">
                 <i class="fas fa-sync-alt subtitle-icon"></i>
